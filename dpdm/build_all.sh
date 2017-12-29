@@ -99,10 +99,11 @@ cd $pwd
 
 # remove the old test-pmd if it exists
 # 
-[ -d $RTE_SDKEX/app/test-pmd ] && rm -r $RTE_SDKEX/app/test-pmd
+[ -d $RTE_SDKEX/app/test-pmd ] && rm -r $RTE_SDKEX/app
 
 
 # copy 
+mkdir $RTE_SDK/app
 cp -r $RTE_SDK/app/test-pmd $RTE_SDKEX/app/.
 
 # apply patch
