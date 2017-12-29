@@ -1,0 +1,29 @@
+DPDM includes a set of user-space libraries (FreeBSD license) and a kernel module (GPL license), vni.ko.
+A DPDK application built with DPDM user-space libraries would enable the application to use traditional
+network management tools, such as ethtool, ip, ifconfig etc, to manage NIC devices managed by user-space
+DPDK device drivers. The DPDM user-space libraries are libraries based upon DPDK libraries, and
+they provide additional device-neutral APIs to support device management capabilities, mainly
+functions equivalent to kernel Netdev ops.
+
+To build DPDM user-space libraries requires
+	- Create four environment variables
+		a. RTE_SDK/RTE_TARGET: the variables used for target DPDK library build
+		b. RTE_SDKEX: path for DPDM source code.
+		c. VNI_NETDEV: path for vni source code
+	- run <dpdm>/build_all.sh: #cd <dpdm>
+														 #./build_all.sh
+
+To build DPDM kernel module, vni, requires
+	- cd to vni directory:  #cd <dpdm>
+	- run "make":						#make
+
+To build an application with DPDM, please refer to <dpdm>/examples/test-vni
+
+To instaniate DPDM kernel module, vni.ko.
+	#insmod <vni>/vni.ko
+
+After vni.ko is installed, below sys files are created for debug, tracking and others.
+	- /sys/kernel/vni_manage/client_cache: used for user-space DPDM library to return VFD get-statistic result
+																				when working with ethtool
+	- /sys/kernel/vni_manage/get_stats_en: used by customer to turn on/off Netdev get-statistics
+	- /sys/kernel/vni_manage/trace: latest 4K debug message for kernel and user-space Netlink activities 

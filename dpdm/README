@@ -1,0 +1,7 @@
+To build DPDM user-space libraries requires
+	- Create four environment variables
+		a. RTE_SDK/RTE_TARGET: the variables used for target DPDK library build
+		b. RTE_SDKEX: path for DPDM source code.
+		c. VNI_NETDEV: path for vni source code
+	- run <dpdm>/build_all.sh: #cd <dpdm>
+														 #./build_all.sh

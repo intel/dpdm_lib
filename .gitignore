@@ -1,0 +1,13 @@
+# ignore .o
+*.o
+# ignore .a
+*.a
+# ignore build directory
+dpdm/build/*
+dpdm/build/lib/*
+dpdm/build/include/*
+
+# ignore test-pmd app directory
+dpdm/app/test-pmd/*
+dpdm/app/test-pmd/build/*
+ 

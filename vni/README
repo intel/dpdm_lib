@@ -1,0 +1,6 @@
+1. Execute make first. This will result in a vni.ko output among many others.
+2. Execute $ make
+3. Insert kernel module by :$ sudo insmod vni.ko      
+4. ls /sys/kernel/vni_image
+5. Remove module by : $ sudo rmmod vni          
+

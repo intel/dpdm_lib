@@ -1,0 +1,55 @@
+The test-vni is a simple console application designed to use DPDM to create
+an interface to enable management NIC devices (both PF devices and VF devices)
+through netdev interface based utilities (ethtool, ip and ifconfig).
+
+Here are description on how to modify a DPDK application build script and source
+code to integrate with DPDM Libraries
+
+1. Build script modification
+# Additional libraries and include directories
+# for DPDM-base application build
+CFLAGS += -O3 -g -I$(RTE_SDKEX)/build/include
+CFLAGS += -I$(VNI_NETDEV) -I$(PWD) -lpthread
+CFLAGS += $(WERROR_FLAGS)
+
+LDLIBS += -L$(RTE_SDKEX)/build/lib
+LDLIBS += --whole-archive
+LDLIBS += -lrte_ethdev_ex
+LDLIBS += -lrte_pmd_ixgbe_ex
+LDLIBS += -lrte_pmd_i40e_ex
+LDLIBS += -lrte_vni_util
+LDLIBS += --no-whole-archive
+include $(RTE_SDK)/mk/rte.extapp.mk
+
+2. Source code change:
+2.a: Application main program needs to change to add invocation of rte_dev_probe_extension after DPDK rte_eal_init(),
+so the extended device driver can be associated with the DPDK device base driver.
+
+ret = rte_eal_init(argc, argv);
+	…
+
+	if (rte_dev_probe_extension(rte_eth_dev_count()))
+		printf("Fail to connect extended drivers \n");
+
+	vni_parse_args(argc, argv);
+
+2.b: Application main program to create a NDC client to provide process ID and other information to kernel module (VNI)
+so the Netlink interface between application and VNI can be established. Because the Ntelink interface is based upon socket
+interface, the application needs to listen to any incoming requests from VNI. Below is a light-weight thread implementation
+of a NDC client over DPDM example test-vni.
+
+static void*
+recv_thread(void* arg)
+{
+	ndc_thread_info *thd_info = arg;
+	pid_t dest_pid = 0; /* 0: for kernel */
+
+	rte_ndc_session_init(thd_info->done);	
+	thd_info->status = rte_ndc_client(thd_info->inf_name,
+		thd_info->num_of_ports,
+		dest_pid,
+		thd_info->done);
+
+	return NULL;
+}
+
