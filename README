@@ -1,26 +1,31 @@
 DPDM includes a set of user-space libraries (FreeBSD license) and a kernel module (GPL license), vni.ko.
 A DPDK application built with DPDM user-space libraries would enable the application to use traditional
-network management tools, such as ethtool, ip, ifconfig etc, to manage NIC devices managed by user-space
-DPDK device drivers. The DPDM user-space libraries are libraries based upon DPDK libraries, and
-they provide additional device-neutral APIs to support device management capabilities, mainly
-functions equivalent to kernel Netdev ops.
+network management tools, such as ethtool, ip, ifconfig etc, to manage NIC devices which are bound with
+user-space DPDK device drivers.
 
-To build DPDM user-space libraries requires
-	- Create four environment variables
-		a. RTE_SDK/RTE_TARGET: the variables used for target DPDK library build
+The DPDM user-space libraries are libraries based upon DPDK libraries, and they provide additional
+device-neutral APIs to support device management capabilities, mainly functions equivalent to kernel
+Netdev ops and a set of SR-IOV management functions. A high-level overview of DPDM can be found @
+dpdm/doc/DPDM.pdf
+
+To build DPDM user-space libraries, it requires 
+1. Creating four environment variables
+		a. RTE_SDK/RTE_TARGET: these two variables are used for locating DPDK build
 		b. RTE_SDKEX: path for DPDM source code.
 		c. VNI_NETDEV: path for vni source code
-	- run <dpdm>/build_all.sh: #cd <dpdm>
-														 #./build_all.sh
 
-To build DPDM kernel module, vni, requires
-	- cd to vni directory:  #cd <dpdm>
-	- run "make":						#make
+2. run dpdm/build_all.sh: 
+	#cd dpdm
+	#./build_all.sh
 
-To build an application with DPDM, please refer to <dpdm>/examples/test-vni
+To build DPDM kernel module, vni.ko.
+	#cd vni
+	#make
+
+To build an application with DPDM, please refer to dpdm/examples/test-vni/README
 
 To instaniate DPDM kernel module, vni.ko.
-	#insmod <vni>/vni.ko
+	#insmod vni/vni.ko
 
 After vni.ko is installed, below sys files are created for debug, tracking and others.
 	- /sys/kernel/vni_manage/client_cache: used for user-space DPDM library to return VFD get-statistic result
