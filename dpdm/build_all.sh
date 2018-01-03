@@ -103,7 +103,7 @@ cd $pwd
 
 
 # copy 
-mkdir $RTE_SDK/app
+mkdir $RTE_SDKEX/app
 cp -r $RTE_SDK/app/test-pmd $RTE_SDKEX/app/.
 
 # apply patch
