@@ -6,7 +6,7 @@ to manage NIC devices which are bound with user-space DPDK device drivers.
 The DPDM user-space libraries are libraries based upon DPDK libraries, and they provide additional
 device-neutral APIs to support device management capabilities, mainly functions equivalent to kernel
 Netdev ops and a set of SR-IOV management functions. A high-level overview of DPDM can be found at
-https://gibhub.com/intel/dpdm_lib/dpdm/doc/DPDM.pdf
+dpdm/doc/DPDM.pdf
 
 To build DPDM user-space libraries, it requires 
 1. Creating four environment variables
