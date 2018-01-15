@@ -100,7 +100,7 @@ static int ixgbe_set_vf_rate(struct rte_eth_dev *dev, int vf_id, int max_tx_rate
 static int ixgbe_set_vf_tx_rate(struct rte_eth_dev *dev, int vf_id, int min_tx_rate,
 								int max_tx_rate);
 static int ixgbe_get_vf_config(struct rte_eth_dev *dev, int vf_id,
-struct rte_dev_ifla_vf_info *ivi);
+							struct common_vf_info *ivi);
 static int ixgbe_set_vf_spoofchk(struct rte_eth_dev *dev, int vf_id, int enable);
 static int ixgbe_set_vf_link_state(struct rte_eth_dev *dev, int vf_id, int link);
 static int ixgbe_ping_vfs(struct rte_eth_dev *dev, int vf_id);
@@ -1628,19 +1628,19 @@ ixgbe_set_vf_rate(struct rte_eth_dev *dev, int vf_id, int max_tx_rate)
 
 static int
 ixgbe_get_vf_config(struct rte_eth_dev *dev, int vf_id,
-	struct rte_dev_ifla_vf_info *ivi)
+	struct common_vf_info *ivi)
 {
 	struct ixgbe_vf_info *vfinfo = 
 		*(IXGBE_DEV_PRIVATE_TO_P_VFDATA(dev->data->dev_private));
 	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
 
-	ivi->vf_id = vf_id;
-	rte_memcpy(ivi->mac_addr, vfinfo[vf_id].vf_mac_addresses, ETHER_ADDR_LEN);
-	ivi->vlan_id = vfinfo[vf_id].default_vf_vlan_id;
-	ivi->spoofchk_en = vfinfo[vf_id].spoofchk_enabled;
-	ivi->min_tx_rate = 0;
+	rte_memcpy(ivi->mac, vfinfo[vf_id].vf_mac_addresses, ETHER_ADDR_LEN);
+	ivi->vlan = vfinfo[vf_id].default_vf_vlan_id;
+	ivi->qos = (vfinfo[vf_id].default_vf_vlan_id >> 12) & 0x7;
+	ivi->spoofchk = vfinfo[vf_id].spoofchk_enabled;
+	ivi->linkstate = vfinfo[vf_id].clear_to_send?1:0;
+	ivi->min_tx_rate = vfinfo[vf_id].tx_rate[0];
 	ivi->max_tx_rate = vfinfo[vf_id].tx_rate[0];
-	ivi->trusted = (dev_ex->vf_flags[vf_id] & (1 << VF_FLAG_TRUSTED_BIT)) > 0;
 
 	return 0;
 }

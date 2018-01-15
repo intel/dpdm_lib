@@ -75,19 +75,6 @@ struct rte_dev_ifreq {
 	} ifr_ifru;
 };
 
-struct rte_dev_ifla_vf_info {
-	uint32_t vf_id;
-	uint8_t mac_addr[32];
-	uint16_t vlan_id;
-	uint16_t qos;
-	uint8_t spoofchk_en;
-	uint16_t min_tx_rate;
-	uint16_t max_tx_rate;
-	uint8_t rss_query_en;
-	uint8_t trusted;
-	__be16 vlan_proto;
-};
-
 struct rte_dev_udp_tunnel_info {
 	unsigned short type;
 	sa_family_t sa_family;

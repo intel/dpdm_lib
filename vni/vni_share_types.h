@@ -4,11 +4,12 @@
 #ifndef _VNI_SHARE_TYPES_H
 #define _VNI_SHARE_TYPES_H
 
-#define MAXI_MANAGEMENT_DEV	256
-#define MAXI_INTERFACE_NAME	256
+#define MAXI_MANAGEMENT_DEV	64
+#define MAXI_INTERFACE_NAME	64
 #define MAXI_REQ_DATA		4*1600	/* maximum # of NIC registers */
 
 #define NETLINK_VNI 31		/* (MAX_LINKS-1) */
+#define MAC_ADDR_LEN 6
 
 #define GET_DATA(base, offset, type, length) length>=(offset+sizeof(type))?(*(type *)(&base[offset])):((type) 0)
 #define GET_PTR(base, offset, type) (type *)(&base[offset])
@@ -113,11 +114,33 @@ typedef enum {
 	msg_done
 } vni_msg_status;
 
+struct common_pci_addr {
+	unsigned int domain;
+	unsigned char bus;
+	unsigned char devid;
+	unsigned char function;
+};
+
+struct common_vf_info {
+	unsigned char mac[32];
+	unsigned int vlan;
+	unsigned int qos;
+	unsigned int spoofchk;
+	unsigned int linkstate;
+	unsigned int min_tx_rate;
+	unsigned int max_tx_rate;
+};
+
+struct inf_info {
+	char inf_name[MAXI_INTERFACE_NAME];
+	struct common_pci_addr pci_addr;
+};
+#define INF_REQ_SIZE(n) (n*sizeof(struct inf_info)+sizeof(int))
+
 struct inf_req {
-	/* interface name = format("%s%2d", base_name, port_id) */
 	pid_t app_pid;
-	char base_name[MAXI_INTERFACE_NAME];
 	int num_of_ports;
+	struct inf_info inf_set[0];
 };
 
 typedef struct netdev_cmd_info {

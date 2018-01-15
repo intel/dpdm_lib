@@ -36,7 +36,7 @@
 #include <rte_dev.h>
 
 #ifndef MAXI_INTERFACE_NAME
-#define MAXI_INTERFACE_NAME 256
+#define MAXI_INTERFACE_NAME 64
 #endif
 
 #ifdef VNI_DEBUG

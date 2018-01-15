@@ -43,7 +43,7 @@ pid_t get_info_from_inf(char *name, unsigned short *port_id);
 int release_netdev(int ind);
 int vni_add_netdev_devices(netdev_cmd_info *req_info);
 int vni_del_netdev_devices(netdev_cmd_info *req_info);
-int vni_netdev_op_registration(pid_t pid);
+int vni_netdev_connect(pid_t pid);
 void release_netdev_all(void);
 void vni_set_socket(struct sock *socket);
 struct sock *vni_get_socket(void);

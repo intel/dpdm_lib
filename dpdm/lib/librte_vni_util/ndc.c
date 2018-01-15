@@ -52,7 +52,7 @@
 #define MAXI_REP_COUNT 5
 
 struct netlink_data {
-	char inf_name[MAXI_INTERFACE_NAME];
+	struct inf_info inf_info[MAXI_MANAGEMENT_DEV];
 	int sock_fd;
 	int num_of_ports;
 	struct sockaddr_nl dest_addr;
@@ -186,21 +186,23 @@ const char *cmd_name(netdev_cmd_type cmd)
 struct netlink_data*
 find_nl_with_inf_name(char *inf_name)
 {
-	int i;
+	int i, j;
 
 	for(i = 0; i < nl_chan_dep; i++)
-		if (strncmp(netlink_chans[i]->inf_name, inf_name, strlen(inf_name)) == 0)
-			return netlink_chans[i];
+		for (j = 0; j < netlink_chans[i]->num_of_ports; j++)
+			if (strncmp(netlink_chans[i]->inf_info[j].inf_name,
+				inf_name, strlen(inf_name)) == 0)
+				return netlink_chans[i];
 
 	return (struct netlink_data *)0;
 }
 
 static void ndc_nl_data_release(struct netlink_data *nl_data)
 {
-	int i;
+	int i, j;
 	
 	for(i = 0; i < nl_chan_dep; i++) 
-		if (!strcmp(netlink_chans[i]->inf_name, nl_data->inf_name))
+		if (!strcmp(netlink_chans[i]->inf_info[0].inf_name, nl_data->inf_info[0].inf_name))
 			break;
 
 	if (i == nl_chan_dep) {
@@ -258,12 +260,37 @@ static int ndc_send_cmd(struct netlink_data *nl_data, netdev_cmd_info *cmd_info)
 	return status;
 }
 
+static void parse_inf_name(char *name_string, int count,
+	struct inf_info inf_info[]) {
+	char *curr_str, *next_str;
+	char *inf_name;
+	int i;
+
+	curr_str = name_string;
+	for(i = 0; i < count; i++) {
+		inf_name = inf_info[i].inf_name;
+		memset(inf_name, 0, sizeof(inf_info[i].inf_name));
+		next_str = strchr(curr_str, (int)'!');
+		if (!next_str) {
+			if (curr_str == name_string)
+				snprintf(inf_name, MAXI_INTERFACE_NAME, "%s%d", curr_str, i);
+			else
+				snprintf(inf_name, MAXI_INTERFACE_NAME, "%s", curr_str);
+		} else {
+			*next_str = '\0';
+			snprintf(inf_name, MAXI_INTERFACE_NAME, "%s", curr_str);
+			curr_str = &next_str[1];
+		}
+	}
+}
+
 static struct netlink_data* 
 ndc_nl_data_alloc(char *inf_name, int num_of_ports, pid_t dest_pid)
 {
 	struct netlink_data *nl_data;
+	char *next_name;
 	struct sockaddr_nl src_addr;
-	int sock_fd, status;
+	int sock_fd, status, i;
 
 	if (nl_chan_dep == MAXI_NETLINK_CHANNEL) {
 		RTE_VNI_DEBUG_TRACE("too many netlink channels are created\n"); /* TODO log */
@@ -307,9 +334,19 @@ ndc_nl_data_alloc(char *inf_name, int num_of_ports, pid_t dest_pid)
 
 	nl_data->sock_fd = sock_fd;
 	nl_data->num_of_ports = num_of_ports;
-	memset(nl_data->inf_name, 0, sizeof(nl_data->inf_name));
-	strncpy(nl_data->inf_name, inf_name, sizeof(nl_data->inf_name)-1);
+	/* find port pci_addr and parsing interface name for each port */
+	parse_inf_name(inf_name, num_of_ports, nl_data->inf_info);
+	{
+		struct rte_pci_addr addr;
 
+		for(i = 0; i < num_of_ports; i++) {
+			rte_eth_get_pci_addr(i, &addr);
+			nl_data->inf_info[i].pci_addr.domain = addr.domain;
+			nl_data->inf_info[i].pci_addr.bus = addr.bus;
+			nl_data->inf_info[i].pci_addr.devid = addr.devid;
+			nl_data->inf_info[i].pci_addr.function = addr.function;
+		}
+	}
 	ndc_recv_msgbuf_init(nl_data);
 
 	return nl_data;
@@ -387,9 +424,10 @@ static int ndc_inf_proc(struct netlink_data *nl_data, int num_of_ports, int add)
 	else
 		send_cmd_info->cmd = vni_manage_del_inf;
 
-	send_cmd_info->data_length = sizeof(int)+strlen(nl_data->inf_name)+1;
+	send_cmd_info->data_length = sizeof(int)+num_of_ports*sizeof(struct inf_info);
 	*(int *)&send_cmd_info->data[0] = nl_data->num_of_ports;
-	strncpy((char *)(&send_cmd_info->data[sizeof(int)]), nl_data->inf_name, strlen(nl_data->inf_name)+1);
+	memcpy((char *)(&send_cmd_info->data[sizeof(int)]), (void *)nl_data->inf_info,
+		num_of_ports*sizeof(struct inf_info));
 
 	RTE_VNI_DEBUG_TRACE("send inf cmd(%s) to kernel\n", cmd_name(send_cmd_info->cmd));
 	status = ndc_send_cmd(nl_data, send_cmd_info);
@@ -497,6 +535,25 @@ void rte_ndc_session_stop(rte_atomic32_t *state)
 	rte_atomic32_set(state, NDC_STATE_STOP);
 }
 
+/*
+ * Create a netlink device client thread
+ *
+ * inf_name: interface name for netdev. for a multiple port
+ *	configuraiton, two naming choices: 
+ *	1. base-name with port-id as suffix
+ *	2. each port has its own interface name; use token "!" to
+ *		separate inteface name
+ *
+ * num_of_ports: number of netdev interface to be created for
+ *	port #0 to port #(num_of_ports -1)
+ *
+ * dest_pid: application pid
+ *
+ * done: synchronous between this thread and calling thread
+ *	{ NDC_STATE_NONE, NDC_STATE_INIT, NDC_STATE_STOP
+ *		NDC_STATE_CLOSE }
+ *
+ */
 rte_ndc_status rte_ndc_client(char *inf_name, int num_of_ports,
 	pid_t dest_pid, rte_atomic32_t *done)
 {
@@ -504,6 +561,12 @@ rte_ndc_status rte_ndc_client(char *inf_name, int num_of_ports,
 	struct netlink_data *nl_data;
 	int sock_fd;
 	netdev_cmd_info *recv_netdev_cmd, *send_netdev_cmd;
+
+	if (num_of_ports > MAXI_MANAGEMENT_DEV) {
+		RTE_VNI_DEBUG_TRACE("Too many NDC interface request (req: %d maxi:%d)\n",
+			num_of_ports, MAXI_MANAGEMENT_DEV);
+		return ndc_no_inf;
+	}
 
 	nl_data = ndc_nl_data_alloc(inf_name, num_of_ports, dest_pid);
 	if (nl_data == 0)

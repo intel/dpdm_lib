@@ -37,6 +37,7 @@
 #if RTE_VERSION < RTE_VERSION_NUM(16, 11, 0, 0)
 #include <rte_config.h>
 #endif
+#include <rte_pci.h>
 #include <rte_ethdev.h>
 #include <rte_dpdm.h>
 
@@ -51,6 +52,13 @@ rte_eth_get_devs_by_port(port_t port_id, struct rte_eth_dev_ex **dev_ex, struct 
 	*dev = &rte_eth_devices[port_id];
 }
 
+void rte_eth_get_pci_addr(port_t port_id, struct rte_pci_addr *addr)
+{
+	struct rte_eth_dev *dev = &rte_eth_devices[port_id];
+	struct rte_pci_device *pci_dev = DPDM_DEV_TO_PCI(dev);
+
+	memcpy(addr, &pci_dev->addr, sizeof(struct rte_pci_addr));
+}
 struct rte_eth_dev_ex*
 rte_eth_get_devex_by_dev(struct rte_eth_dev *dev)
 {

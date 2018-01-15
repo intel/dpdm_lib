@@ -497,11 +497,12 @@ rte_netdev_set_vf_rate(port_t port_id, int vf_id, int max_tx_rate)
 
 int
 rte_netdev_get_vf_config(port_t port_id, int vf_id,
-	struct rte_dev_ifla_vf_info *ivi)
+	struct common_vf_info *ivi)
 {
 	struct rte_eth_dev_ex *dev_ex;
 	struct rte_eth_dev *dev;
 	struct rte_pci_device *pci_dev;
+	int status;
 
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -ENODEV);
 	rte_eth_get_devs_by_port(port_id, &dev_ex, &dev);
@@ -510,7 +511,10 @@ rte_netdev_get_vf_config(port_t port_id, int vf_id,
 	RET_ERR_ON_VF_ID_CHECK(dev, pci_dev, vf_id);
 
 	RTE_FUNC_PTR_OR_ERR_RET(*dev_ex->dev_netdev_ops->get_vf_config, -ENOTSUP);
-	return (*dev_ex->dev_netdev_ops->get_vf_config)(dev, vf_id, ivi);
+	status = (*dev_ex->dev_netdev_ops->get_vf_config)(dev, vf_id, &dev_ex->vf_info[vf_id]);
+	memcpy(ivi, &dev_ex->vf_info[vf_id], sizeof(struct common_vf_info));
+
+	return status;
 }
 
 int

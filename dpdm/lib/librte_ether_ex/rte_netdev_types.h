@@ -37,6 +37,7 @@
 
 struct rte_eth_dev;
 struct rte_eth_stats;
+struct common_vf_info;
 
 typedef int (*eth_netdev_init_t)(struct rte_eth_dev *dev);
 typedef int (*eth_netdev_uninit_t)(struct rte_eth_dev *dev);
@@ -71,7 +72,7 @@ typedef int (*eth_netdev_set_vf_vlan_t)(struct rte_eth_dev *dev, int vf_id, uint
 									  uint8_t qos);
 typedef int (*eth_netdev_set_vf_rate_t)(struct rte_eth_dev *dev, int vf_id, int max_tx_rate);
 typedef int (*eth_netdev_get_vf_config_t)(struct rte_eth_dev *dev, int vf_id,
-									  struct rte_dev_ifla_vf_info *ivi);
+									  struct common_vf_info *ivi);
 typedef int (*eth_netdev_set_vf_spoofchk_t)(struct rte_eth_dev *dev, int vf_id, int enable);
 typedef int (*eth_netdev_set_vf_link_state_t)(struct rte_eth_dev *dev, int vf_id, int link);
 typedef int (*eth_netdev_ping_vfs_t)(struct rte_eth_dev *dev, int vf_id);

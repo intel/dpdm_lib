@@ -22,6 +22,7 @@
  *   Intel Corporation
  */
 #include <linux/netdevice.h>
+#include <linux/version.h>
 #include "vni.h"
 
 /* utility function */
@@ -472,6 +473,7 @@ vni_get_vf_config(struct net_device *dev, int vf,
 	struct ifla_vf_info *ivf)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
+	struct common_vf_info *us_vf_info;
 	
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_get_vf_config,
 		sizeof(int) + sizeof(bool));		
@@ -486,8 +488,19 @@ vni_get_vf_config(struct net_device *dev, int vf,
 	if(u2k_cmd_info->status) {
 		vni_elog("vni: netdev_get_config (inf: %s)failed with error code: %d\n",
 		dev->name, u2k_cmd_info->status);
-	} else
-		memcpy(ivf, u2k_cmd_info->data, sizeof(struct ifla_vf_info));
+	} else {
+		us_vf_info = (void *)u2k_cmd_info->data;
+		ivf->vf = vf;
+		memcpy(ivf->mac, us_vf_info->mac, MAC_ADDR_LEN);
+		ivf->vlan = us_vf_info->vlan;
+		ivf->qos = us_vf_info->qos;
+		ivf->spoofchk = us_vf_info->spoofchk;
+		ivf->linkstate = us_vf_info->linkstate;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
+		ivf->min_tx_rate = us_vf_info->min_tx_rate;
+		ivf->max_tx_rate = us_vf_info->max_tx_rate;
+#endif
+	}
 
 	return u2k_cmd_info->status;
 }

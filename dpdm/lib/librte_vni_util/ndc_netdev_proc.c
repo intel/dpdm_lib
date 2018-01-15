@@ -77,7 +77,7 @@ void netdev_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 {
 	//struct rte_dev_pkt_buff pkt_buff;
 	struct rte_eth_stats rte_stats;
-	struct rte_dev_ifla_vf_info rte_ivf;
+	struct common_vf_info rte_ivf;
 	struct netdev_priv_data netdev_data;
 	//unsigned char *buf;
 
@@ -196,8 +196,8 @@ void netdev_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 			GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)), &rte_ivf);
 		COPY_DATA(send_cmd_info->data, &rte_ivf, 
-			sizeof(struct rte_dev_ifla_vf_info));
-		send_cmd_info->data_length = sizeof(struct rte_dev_ifla_vf_info );
+			sizeof(struct common_vf_info));
+		send_cmd_info->data_length = sizeof(struct common_vf_info );
 		break;
 	case vni_netdev_set_vf_trust:
 		send_cmd_info->status = rte_netdev_set_vf_trust(cmd_info->port_id,

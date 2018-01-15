@@ -53,6 +53,7 @@ struct rte_eth_dev_ex {
 	struct netdev_priv_data netdev_data;
 	const struct eth_dev_ethtool_ops *dev_ethtool_ops;
 	const struct eth_dev_netdev_ops *dev_netdev_ops;
+	struct common_vf_info vf_info[RTE_MAX_VF_COUNT];
 
 	unsigned int is_vf;
 	unsigned int dev_netif_flag;

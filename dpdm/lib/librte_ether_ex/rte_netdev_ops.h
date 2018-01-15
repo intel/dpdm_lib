@@ -394,7 +394,7 @@ int rte_netdev_set_vf_rate(port_t port_id, int vf_id, int max_tx_rate);
  *   - 0: Success.
  */
 int rte_netdev_get_vf_config(port_t port_id, int vf_id,
-									  struct rte_dev_ifla_vf_info *ivi);
+									  struct common_vf_info *ivi);
 
 /**
  * Confgure VF spoof check

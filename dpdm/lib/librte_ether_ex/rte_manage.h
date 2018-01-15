@@ -97,12 +97,17 @@ struct rte_dev_drv_info {
 };
 
 /*
- * Derive base driver and extended driver through port-id
+ * Fetch base driver and extended driver through port-id
  */
 void rte_eth_get_devs_by_port(port_t port_id, struct rte_eth_dev_ex **dev_ex, struct rte_eth_dev **dev);
 
 /*
- * Derive the extended driver data structure from base driver data structure
+ * Fetch pci device address from port-id
+ */
+void rte_eth_get_pci_addr(port_t port_id, struct rte_pci_addr *addr);
+
+/*
+ * Fetch the extended driver data structure from base driver data structure
  */
 struct rte_eth_dev_ex *rte_eth_get_devex_by_dev(struct rte_eth_dev *dev);
 

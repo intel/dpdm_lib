@@ -97,7 +97,7 @@ static int i40e_set_vf_vlan(struct rte_eth_dev *dev, int vf_id, uint16_t vlan_id
 									  uint8_t qos);
 static int i40e_set_vf_rate(struct rte_eth_dev *dev, int vf_id, int max_tx_rate);
 static int i40e_get_vf_config(struct rte_eth_dev *dev, int vf_id,
-									  struct rte_dev_ifla_vf_info *ivi);
+									  struct common_vf_info *ivi);
 static int i40e_set_vf_spoofchk(struct rte_eth_dev *dev, int vf_id, int enable);
 static int i40e_set_vf_link_state(struct rte_eth_dev *dev, int vf_id, int link);
 static int i40e_set_vf_mac_anti_spoof(struct rte_eth_dev *dev, int vf_id, uint8_t on);
@@ -2182,9 +2182,8 @@ i40e_set_vf_rate(struct rte_eth_dev *dev, int vf_id, int max_tx_rate)
 
 static int
 i40e_get_vf_config(struct rte_eth_dev *dev, int vf_id,
-	struct rte_dev_ifla_vf_info *ivi)
+	struct common_vf_info *ivi)
 {
-	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
 	struct i40e_pf_vf *vf;
 	struct i40e_vsi *vsi;
 	struct i40e_pf *pf;
@@ -2198,11 +2197,19 @@ i40e_get_vf_config(struct rte_eth_dev *dev, int vf_id,
 		return -EINVAL;
 	}
 
-	ivi->vf_id = vf_id;
-	rte_memcpy(ivi->mac_addr, &vf->mac_addr, ETHER_ADDR_LEN);
-	ivi->vlan_id = le16_to_cpu(vsi->info.pvid) & 0xFFF;
+	rte_memcpy(ivi->mac, &vf->mac_addr, ETHER_ADDR_LEN);
+	ivi->vlan = le16_to_cpu(vsi->info.pvid) & 0xFFF;
 	ivi->qos = (le16_to_cpu(vsi->info.pvid) >> 12) & 0x7;
-	ivi->trusted = (dev_ex->vf_flags[vf_id] & (1 << VF_FLAG_TRUSTED_BIT))?1:0;
+	
+	/* Check if it has been already on or off */
+	if (vsi->info.valid_sections &
+		rte_cpu_to_le_16(I40E_AQ_VSI_PROP_SECURITY_VALID)) {		
+		if (check_flag(vsi->info.sec_flags, I40E_AQ_VSI_SEC_FLAG_ENABLE_MAC_CHK) ||
+			check_flag(vsi->info.sec_flags, I40E_AQ_VSI_SEC_FLAG_ENABLE_VLAN_CHK))
+			ivi->spoofchk = 1;
+		else
+			ivi->spoofchk = 0;
+	}
 
 	return 0;
 }
@@ -2379,8 +2386,8 @@ i40e_set_vf_vlan_anti_spoof(struct rte_eth_dev *dev, int vf_id, uint8_t on)
  *
  */
 static int
-i40e_set_vf_vlan_filter(struct rte_eth_dev *dev, uint64_t vf_mask, uint16_t vlan_id,
-	uint8_t on)
+i40e_set_vf_vlan_filter(struct rte_eth_dev *dev, uint64_t vf_mask,
+	uint16_t vlan_id, uint8_t on)
 {
 	struct i40e_pf *pf;
 	uint16_t vf_idx;
@@ -2393,14 +2400,13 @@ i40e_set_vf_vlan_filter(struct rte_eth_dev *dev, uint64_t vf_mask, uint16_t vlan
 	for (vf_idx = 0; vf_idx < 64 && ret == I40E_SUCCESS; vf_idx++) {
 		if (vf_mask & ((uint64_t)(1ULL << vf_idx))) {
 			if (on)
-				ret = i40e_vsi_add_vlan(pf->vfs[vf_idx].vsi,
-				vlan_id);
+				ret = i40e_vsi_add_vlan(pf->vfs[vf_idx].vsi, vlan_id);
 			else
-				ret = i40e_vsi_delete_vlan(pf->vfs[vf_idx].vsi,
-				vlan_id);
+				ret = i40e_vsi_delete_vlan(pf->vfs[vf_idx].vsi, vlan_id);
 			if (ret != I40E_SUCCESS) {
 				ret = -ENOTSUP;
-				PMD_DRV_LOG(ERR, "Failed to set VF VLAN filter, on = %d, on vf #%d", on, vf_idx);
+				PMD_DRV_LOG(ERR, "Failed to set VF VLAN filter, on = %d"
+					", on vf #%d", on, vf_idx);
 			}
 		}
 	}

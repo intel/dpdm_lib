@@ -23,6 +23,7 @@
  */
 #include <linux/version.h>
 #include <linux/delay.h>
+#include <linux/pci.h>
 #include "vni.h"
 #include "vni_share_types.h"
 
@@ -291,6 +292,7 @@ void clean_pending_inf_cmd(void)
 	if (defer_netdev_client != INVALID_NETDEV_INDEX) {
 		for( i = 0; i < netdev_tbl[defer_netdev_client].num_of_if; i++) {
 			net = netdev_tbl[defer_netdev_client].dev_ptr_table[i];
+			net->dev.parent = 0; /* disconnect with proxy driver */
 			unregister_netdev(net);
 			vni_log("Unregister netdev %s\n", net->name);
 			free_netdev(net);
@@ -438,38 +440,19 @@ static void connect_netdev_op(struct net_device *dev)
 	dev_add_ethtool_ops(dev);
 }
 
-static int same_base(char *src, char *base)
-{
-	size_t size = strlen(base);
-
-	if (strncmp(src, base, size) == 0) {
-		if ((strlen(src) > size) && (src[size] >= '0') &&
-			(src[size] <= '9'))
-			return 1;
-	}
-
-	return 0;
-}
-
 pid_t get_info_from_inf(char *name, unsigned short *port_id)
 {
 	int i, j;
-	char *num_str;
-	unsigned char num = 0;
 
 	for(i = 0; i < MAXI_MANAGEMENT_DEV; i++) {
 		if (netdev_tbl[i].num_of_if) {
-			num_str = netdev_tbl[i].base_name;
-			if (same_base(name, num_str)){
-				for(j= strlen(num_str); j < strlen(name); j++) {
-					num *= 10;
-					if ((name[j] <= '9') && (name[j] >= '0'))
-						num += (name[j]-'0');
-					else
-						break;
+			for(j = 0; j < netdev_tbl[i].num_of_if; j++) {
+				if (!strncmp(name, netdev_tbl[i].inf_set[j].inf_name,
+					strlen(name))) {
+					
+					*port_id = j;
+					return netdev_tbl[i].app_pid;
 				}
-				*port_id = num;
-				return netdev_tbl[i].app_pid;
 			}
 		}
 	}
@@ -545,9 +528,19 @@ int vni_del_netdev_devices(struct netdev_cmd_info *req_info) {
 
 }
 
-int vni_netdev_op_registration(pid_t pid)
+
+/*
+ * Connect netdev-op and ethtool-op with newly create net_devices, and
+ * fill in necessary kernel proxy driver for kernel module to share data
+ *
+ * pid: process id of user-space application
+ * 
+ */
+int vni_netdev_connect(pid_t pid)
 {
 	int i, j;
+	struct common_pci_addr *pci_addr;
+	struct pci_dev *pci_device;
 	struct net_device *net;
 
 	vni_log("Register netdev/ethtool op\n");
@@ -557,6 +550,19 @@ int vni_netdev_op_registration(pid_t pid)
 				for(j = 0; j < netdev_tbl[i].num_of_if; j++) {
 					net = netdev_tbl[i].dev_ptr_table[j];
 					connect_netdev_op(net);
+					/* connect net_device::dev::parent for "ip" command */
+					pci_addr = &netdev_tbl[i].inf_set[j].pci_addr;
+					pci_device = pci_get_domain_bus_and_slot(
+						pci_addr->domain,
+						pci_addr->bus, 
+						PCI_DEVFN(pci_addr->devid, pci_addr->function));
+
+					if (pci_device)
+						net->dev.parent = &pci_device->dev;
+					else
+						vni_elog("Fail to find pci_dev for pci_addr:%4d:%2d:%2d.%d\n",
+							pci_addr->domain, pci_addr->bus, pci_addr->devid,
+							pci_addr->function);
 				}
 				break;
 			}
@@ -588,17 +594,30 @@ int vni_find_next_netdev(int num_of_if)
  */
 int vni_add_netdev_devices(struct netdev_cmd_info *req_info)
 {
-	char ifname[MAXI_INTERFACE_NAME];
+	char *ifname;
 	struct net_device *netdev_ptr;
+	void *inf_set = GET_PTR(req_info->data, sizeof(int), void);
 	int num_of_ports =  GET_DATA(req_info->data, 0, int, req_info->data_length);
-	char *base_name = GET_PTR(req_info->data, sizeof(int), char);
 	int i, status;
 	int netdev_index = vni_find_next_netdev(num_of_ports);
 
-	vni_log( "Add inf with name (%s) for %d ports\n", base_name, num_of_ports);
+	vni_log( "Add %d netdev interface\n", num_of_ports);
 	if (netdev_index == INVALID_NETDEV_INDEX) {
 		vni_elog("Too many netdev managers\n");
 		return -1;
+	}
+
+	if (req_info->data_length < INF_REQ_SIZE(num_of_ports)) {
+		vni_log("Insufficent data in request packet"
+			"expect %d and recv %d\n", INF_REQ_SIZE(num_of_ports),
+			req_info->data_length);
+		return -1;
+	}
+
+	if (num_of_ports > MAXI_NETDEV_PER_CLIENT) {
+		vni_log("Too many netdev interface request (%d), truncated to %d\n",
+			num_of_ports, MAXI_NETDEV_PER_CLIENT);
+		num_of_ports = MAXI_NETDEV_PER_CLIENT;
 	}
 
 	if (pending_inf_cmd.cmd == vni_manage_del_inf){
@@ -607,11 +626,11 @@ int vni_add_netdev_devices(struct netdev_cmd_info *req_info)
 	}
 
 	netdev_tbl[netdev_index].app_pid = req_info->app_pid;
-	strncpy(netdev_tbl[netdev_index].base_name, base_name,
-		req_info->data_length - sizeof(int) + 1);
+	memcpy(netdev_tbl[netdev_index].inf_set, inf_set,
+		num_of_ports*sizeof(struct inf_info));
 
 	for(i = 0; i < num_of_ports; i++) {
-		snprintf(ifname, MAXI_INTERFACE_NAME, "%s%d", base_name, i);
+		ifname = netdev_tbl[netdev_index].inf_set[i].inf_name;
 		netdev_ptr = alloc_netdev(sizeof(struct net_device)+
 			sizeof(struct netdev_priv_data), ifname, 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,0,4)
@@ -633,8 +652,8 @@ int vni_add_netdev_devices(struct netdev_cmd_info *req_info)
 	for(i = 0; i < num_of_ports; i++)
 		init_completion(&netdev_tbl[netdev_index].done[i]);
 
-	vni_log("Succeed register %d inf with base-name %s\n", netdev_tbl[netdev_index].num_of_if,
-			netdev_tbl[netdev_index].base_name);
+	vni_log("Succeed register %d inf with name %s ...\n", netdev_tbl[netdev_index].num_of_if,
+			netdev_tbl[netdev_index].inf_set[0].inf_name);
 	vni_log("%d netdev device\n", get_netdev_count());
 	return get_netdev_count();
 }
@@ -657,7 +676,7 @@ int vni_proc_inf_cmd(void)
 	/* netdev/ethtool op registration */
 	switch(pending_inf_cmd.cmd){
 	case vni_manage_add_inf:
-		vni_netdev_op_registration(pending_inf_cmd.app_pid);
+		vni_netdev_connect(pending_inf_cmd.app_pid);
 		/* this is the last step of deferred add_inf process */
 		pending_inf_cmd.cmd = vni_invalid;
 		break;

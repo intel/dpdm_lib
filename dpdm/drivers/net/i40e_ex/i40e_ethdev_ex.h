@@ -34,6 +34,8 @@
 #define _I40E_ETHDEV_EX_H_
 #include <rte_version.h>
 
+#define check_flag(flag, bit) ((flag & bit) == bit)
+
 #ifdef __cplusplus
 extern "C" {
 #endif

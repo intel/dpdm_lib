@@ -33,9 +33,9 @@
 struct netdev_table {
 	pid_t app_pid;
 	int num_of_if;
-	char base_name[MAXI_INTERFACE_NAME];
 	struct net_device *dev_ptr_table[MAXI_NETDEV_PER_CLIENT];
 	struct completion done[MAXI_NETDEV_PER_CLIENT];
+	struct inf_info inf_set[MAXI_NETDEV_PER_CLIENT];
 };
 
 struct netdev_info_ext{
