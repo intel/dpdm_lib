@@ -492,13 +492,19 @@ vni_get_vf_config(struct net_device *dev, int vf,
 		us_vf_info = (void *)u2k_cmd_info->data;
 		ivf->vf = vf;
 		memcpy(ivf->mac, us_vf_info->mac, MAC_ADDR_LEN);
-		ivf->vlan = us_vf_info->vlan;
-		ivf->qos = us_vf_info->qos;
+		ivf->vlan = ((__u32)us_vf_info->vlan)&0xFFF;
+		ivf->qos = ((__u32)us_vf_info->qos) & 0x7;
 		ivf->spoofchk = us_vf_info->spoofchk;
 		ivf->linkstate = us_vf_info->linkstate;
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
 		ivf->min_tx_rate = us_vf_info->min_tx_rate;
 		ivf->max_tx_rate = us_vf_info->max_tx_rate;
+		vni_log("vni:  netdev_get_config (inf: %s) recv tx rate of (0x%x,0x%x)\n",
+			dev->name, us_vf_info->max_tx_rate, us_vf_info->min_tx_rate);
+#else
+		ivf->tx_rate = us_vf_info->max_tx_rate;
+		vni_log("vni:  netdev_get_config (inf: %s) recv tx rate of 0x%x\n",
+			dev->name, us_vf_info->max_tx_rate);
 #endif
 	}
 

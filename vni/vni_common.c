@@ -43,7 +43,8 @@ struct netdev_cmd_info pending_inf_cmd;
 struct mutex vni_netlink_mutex, vni_netdev_mutex;
 static vni_msg_status vni_msg_state;
 static void netdev_setup(struct net_device *dev);
-static void connect_netdev_op(struct net_device *dev);
+static void connect_netdev_op(struct net_device *dev,
+	struct netdev_priv_data *priv_data);
 
 int is_inf_closing(struct net_device *net)
 {
@@ -426,6 +427,31 @@ int k2u_link_1var(struct net_device *dev, netdev_cmd_type cmd,
 
 	return u2k_cmd_info->status;
 }
+
+void get_netdevice(struct net_device *dev,
+	struct netdev_priv_data *netdev_data)
+{
+	netdev_data->features = dev->features;
+	netdev_data->hw_features = dev->hw_features;
+	netdev_data->addr_len = dev->addr_len;
+	netdev_data->mtu = dev->mtu;
+	memcpy(netdev_data->perm_addr, dev->perm_addr, netdev_data->addr_len);
+	memcpy(netdev_data->dev_addr, dev->dev_addr, netdev_data->addr_len);
+	if(!memcmp(dev->dev_addr, dev->perm_addr, netdev_data->addr_len))
+		vni_log("Interface address change\n");
+}
+
+void set_netdevice(struct net_device *dev,
+	struct netdev_priv_data *netdev_data)
+{
+	dev->features = netdev_data->features;
+	dev->hw_features = netdev_data->hw_features;
+	dev->addr_len = netdev_data->addr_len;
+	dev->mtu = netdev_data->mtu;
+	memcpy(dev->perm_addr, netdev_data->perm_addr, netdev_data->addr_len);
+}
+
+
 /* end of helper routine */
 
 static void netdev_setup(struct net_device *dev)
@@ -434,10 +460,17 @@ static void netdev_setup(struct net_device *dev)
 	vni_log("Defer netdev op registration!\n");
 }
 
-static void connect_netdev_op(struct net_device *dev)
+static void connect_netdev_op(struct net_device *dev,
+	struct netdev_priv_data *priv_data)
 {
 	dev_add_netdev_ops(dev);
 	dev_add_ethtool_ops(dev);
+	/* update net-device with user-space private data */
+	/* initial device interface address is set with */
+	/* permanent addr								*/
+	set_netdevice(dev, priv_data);
+	dev->dev_addr = dev->perm_addr;
+	dev->type = 1; /* ARPHRD_ETHER */
 }
 
 pid_t get_info_from_inf(char *name, unsigned short *port_id)
@@ -549,7 +582,7 @@ int vni_netdev_connect(pid_t pid)
 			if (netdev_tbl[i].app_pid == pid) {
 				for(j = 0; j < netdev_tbl[i].num_of_if; j++) {
 					net = netdev_tbl[i].dev_ptr_table[j];
-					connect_netdev_op(net);
+					connect_netdev_op(net, &netdev_tbl[i].inf_set[j].data);
 					/* connect net_device::dev::parent for "ip" command */
 					pci_addr = &netdev_tbl[i].inf_set[j].pci_addr;
 					pci_dev = pci_get_domain_bus_and_slot(

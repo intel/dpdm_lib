@@ -64,6 +64,11 @@ int is_inf_closing(struct net_device *net);
 int vni_find_next_netdev(int num_of_if);
 void vni_init_netdev(void);
 
+void get_netdevice(struct net_device *dev,
+	struct netdev_priv_data *netdev_data);
+void set_netdevice(struct net_device *dev,
+	struct netdev_priv_data *netdev_data);
+
 /* helper routine for send/recv nl packets to/from user-space */
 netdev_cmd_info *k2u_downlink(struct net_device *dev,
 	netdev_cmd_type cmd, size_t data_size);

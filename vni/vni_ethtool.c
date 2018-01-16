@@ -26,26 +26,6 @@
 #include <linux/string.h>
 #include "vni.h"
 
-static void get_netdevice(struct net_device *dev,
-	struct netdev_priv_data *netdev_data)
-{
-	netdev_data->features = dev->features;
-	netdev_data->hw_features = dev->hw_features;
-	netdev_data->addr_len = dev->addr_len;
-	netdev_data->mtu = dev->mtu;
-	memcpy(netdev_data->perm_addr, dev->perm_addr, netdev_data->addr_len);
-}
-
-static void set_netdevice(struct net_device *dev,
-	struct netdev_priv_data *netdev_data)
-{
-	dev->features = netdev_data->features;
-	dev->hw_features = netdev_data->hw_features;
-	dev->addr_len = netdev_data->addr_len;
-	dev->mtu = netdev_data->mtu;
-	memcpy(dev->perm_addr, netdev_data->perm_addr, netdev_data->addr_len);
-}
-
 static int vni_set_setting(struct net_device *dev, struct ethtool_cmd *cmd)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_setting, cmd,

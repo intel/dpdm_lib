@@ -52,7 +52,6 @@
 #define MAXI_REP_COUNT 5
 
 struct netlink_data {
-	struct inf_info inf_info[MAXI_MANAGEMENT_DEV];
 	int sock_fd;
 	int num_of_ports;
 	struct sockaddr_nl dest_addr;
@@ -60,6 +59,7 @@ struct netlink_data {
 	unsigned char send_data[MAXI_REPLY_SIZE];
 	unsigned char recv_data[MAXI_RECV_SIZE];
 	struct iovec send_iov, recv_iov;
+	struct inf_info inf_info[0];
 };
 
 static int nl_chan_dep = 0;
@@ -297,7 +297,8 @@ ndc_nl_data_alloc(char *inf_name, int num_of_ports, pid_t dest_pid)
 		return NULL;
 	}
 
-	nl_data = malloc(sizeof(struct netlink_data));
+	nl_data = malloc(sizeof(struct netlink_data) + 
+		num_of_ports*sizeof(struct inf_info));
 	if (nl_data == NULL) {
 		RTE_VNI_DEBUG_TRACE("run out of memory for netlink_data\n"); /* TODO log */
 		return NULL;
@@ -345,6 +346,7 @@ ndc_nl_data_alloc(char *inf_name, int num_of_ports, pid_t dest_pid)
 			nl_data->inf_info[i].pci_addr.bus = addr.bus;
 			nl_data->inf_info[i].pci_addr.devid = addr.devid;
 			nl_data->inf_info[i].pci_addr.function = addr.function;
+			rte_ethtool_get_netdev_data(i, (void *)&nl_data->inf_info[i].data);
 		}
 	}
 	ndc_recv_msgbuf_init(nl_data);

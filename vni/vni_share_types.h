@@ -131,18 +131,6 @@ struct common_vf_info {
 	unsigned int max_tx_rate;
 };
 
-struct inf_info {
-	char inf_name[MAXI_INTERFACE_NAME];
-	struct common_pci_addr pci_addr;
-};
-#define INF_REQ_SIZE(n) (n*sizeof(struct inf_info)+sizeof(int))
-
-struct inf_req {
-	pid_t app_pid;
-	int num_of_ports;
-	struct inf_info inf_set[0];
-};
-
 typedef struct netdev_cmd_info {
 	void *host;
 	pid_t app_pid;
@@ -179,10 +167,23 @@ struct netdev_priv_data {
 	unsigned long long hw_features;
 	unsigned long long features;
 	unsigned char perm_addr[32];
-	unsigned char dev_addr[6];
+	unsigned char dev_addr[32];
 	unsigned char addr_len;
 	unsigned int mtu;
 	unsigned int flags;
+};
+
+struct inf_info {
+	char inf_name[MAXI_INTERFACE_NAME];
+	struct common_pci_addr pci_addr;
+	struct netdev_priv_data data;
+};
+#define INF_REQ_SIZE(n) (n*sizeof(struct inf_info)+sizeof(int))
+
+struct inf_req {
+	pid_t app_pid;
+	int num_of_ports;
+	struct inf_info inf_set[0];
 };
 
 #endif /* _VNI_SHARE_TYPES_H */
