@@ -540,7 +540,7 @@ int vni_netdev_connect(pid_t pid)
 {
 	int i, j;
 	struct common_pci_addr *pci_addr;
-	struct pci_dev *pci_device;
+	struct pci_dev *pci_dev;
 	struct net_device *net;
 
 	vni_log("Register netdev/ethtool op\n");
@@ -552,14 +552,18 @@ int vni_netdev_connect(pid_t pid)
 					connect_netdev_op(net);
 					/* connect net_device::dev::parent for "ip" command */
 					pci_addr = &netdev_tbl[i].inf_set[j].pci_addr;
-					pci_device = pci_get_domain_bus_and_slot(
+					pci_dev = pci_get_domain_bus_and_slot(
 						pci_addr->domain,
 						pci_addr->bus, 
 						PCI_DEVFN(pci_addr->devid, pci_addr->function));
 
-					if (pci_device)
-						net->dev.parent = &pci_device->dev;
-					else
+					if (pci_dev) {
+						net->dev.parent = &pci_dev->dev;
+						if (pci_dev->is_physfn)
+							vni_log("There are %d VFs created, and"
+							" %d assigned from proxy driver\n",
+							pci_num_vf(pci_dev), pci_vfs_assigned(pci_dev));
+					} else
 						vni_elog("Fail to find pci_dev for pci_addr:%4d:%2d:%2d.%d\n",
 							pci_addr->domain, pci_addr->bus, pci_addr->devid,
 							pci_addr->function);
