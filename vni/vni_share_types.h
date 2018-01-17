@@ -11,11 +11,11 @@
 #define NETLINK_VNI 31		/* (MAX_LINKS-1) */
 #define MAC_ADDR_LEN 6
 
-#define GET_DATA(base, offset, type, length) length>=(offset+sizeof(type))?(*(type *)(&base[offset])):((type) 0)
-#define GET_PTR(base, offset, type) (type *)(&base[offset])
+#define VNI_GET_DATA(base, offset, type, length) length>=(offset+sizeof(type))?(*(type *)(&base[offset])):((type) 0)
+#define VNI_GET_PTR(base, offset) (void *)(&base[offset])
 #define MIN(a,b) a>b?b:a
-#define COPY_DATA(dst, src, data_size)	memcpy(dst, src, MIN(sizeof(dst), MIN(sizeof(src), data_size)))
-#define INIT_DATA(base, value, size)	memset(base, value, MIN(sizeof(base), size))
+#define VNI_COPY_DATA(dst, src, data_size)	memcpy(dst, src, MIN(sizeof(dst), MIN(sizeof(src), data_size)))
+#define VNI_INIT_DATA(base, value, size)	memset(base, value, MIN(sizeof(base), size))
 
 #ifndef ETH_GSTRING_LEN
 #define ETH_GSTRING_LEN 32

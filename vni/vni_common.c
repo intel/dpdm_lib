@@ -633,8 +633,8 @@ int vni_add_netdev_devices(struct netdev_cmd_info *req_info)
 {
 	char *ifname;
 	struct net_device *netdev_ptr;
-	void *inf_set = GET_PTR(req_info->data, sizeof(int), void);
-	int num_of_ports =  GET_DATA(req_info->data, 0, int, req_info->data_length);
+	void *inf_set = VNI_GET_PTR(req_info->data, sizeof(int));
+	int num_of_ports =  VNI_GET_DATA(req_info->data, 0, int, req_info->data_length);
 	int i, status;
 	int netdev_index = vni_find_next_netdev(num_of_ports);
 

@@ -100,7 +100,7 @@ void netdev_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_netdev_change_rx_flags:
 		send_cmd_info->status = rte_netdev_change_rx_flags(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int, sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
+			VNI_GET_DATA(cmd_info->data, 0, int, sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_set_rx_mode:
@@ -119,13 +119,13 @@ void netdev_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 	case vni_netdev_do_ioctl:
 		send_cmd_info->status = rte_netdev_do_ioctl(cmd_info->port_id,
 			(struct rte_dev_ifreq *)cmd_info->data,
-			GET_DATA(cmd_info->data, sizeof(struct rte_dev_ifreq), int,
+			VNI_GET_DATA(cmd_info->data, sizeof(struct rte_dev_ifreq), int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_change_mtu:
 		send_cmd_info->status = rte_netdev_change_mtu(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int, sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
+			VNI_GET_DATA(cmd_info->data, 0, int, sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;		
 	case vni_netdev_tx_timeout:
@@ -148,75 +148,76 @@ void netdev_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_netdev_vlan_rx_add_vid: /* skip __be16 prot (2 bytes) from netdev_op */
 		send_cmd_info->status = rte_netdev_vlan_rx_add_vid(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 2, uint16_t,
+			VNI_GET_DATA(cmd_info->data, 2, uint16_t,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;		
 	case vni_netdev_vlan_rx_kill_vid:
 		send_cmd_info->status = rte_netdev_vlan_rx_kill_vid(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 2, uint16_t,
+			VNI_GET_DATA(cmd_info->data, 2, uint16_t,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;		
 	case vni_netdev_set_vf_mac:
 		send_cmd_info->status = rte_netdev_set_vf_mac_addr(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int,
+			VNI_GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)),
 			(uint8_t *)(&cmd_info->data[sizeof(int)]));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_set_vf_vlan: /* CAVEAT: make sure queue-id<-->vf-id match */
 		send_cmd_info->status = rte_netdev_set_vf_vlan(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int,
+			VNI_GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)),/* queue */
-			GET_DATA(cmd_info->data, sizeof(int), uint16_t,
+			VNI_GET_DATA(cmd_info->data, sizeof(int), uint16_t,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)), /* vlan */
-			GET_DATA(cmd_info->data, sizeof(int)+sizeof(uint16_t), uint8_t,
+			VNI_GET_DATA(cmd_info->data, sizeof(int)+sizeof(uint16_t), uint8_t,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_set_vf_rate:
 		send_cmd_info->status = rte_netdev_set_vf_rate(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int,
+			VNI_GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)),
-			GET_DATA(cmd_info->data, sizeof(int), int,
+			VNI_GET_DATA(cmd_info->data, sizeof(int), int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_set_vf_spoofchk:
 		send_cmd_info->status = rte_netdev_set_vf_spoofchk(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int,
+			VNI_GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)), 
-			GET_DATA(cmd_info->data, sizeof(int), int,
+			VNI_GET_DATA(cmd_info->data, sizeof(int), int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_get_vf_config:
 		send_cmd_info->status = rte_netdev_get_vf_config(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int,
+			VNI_GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)), &rte_ivf);
-		COPY_DATA(send_cmd_info->data, &rte_ivf, 
+		VNI_COPY_DATA(send_cmd_info->data, &rte_ivf, 
 			sizeof(struct common_vf_info));
 		send_cmd_info->data_length = sizeof(struct common_vf_info );
 		break;
 	case vni_netdev_set_vf_trust:
 		send_cmd_info->status = rte_netdev_set_vf_trust(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int,
+			VNI_GET_DATA(cmd_info->data, 0, int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)),
-			GET_DATA(cmd_info->data, sizeof(int), int,
+			VNI_GET_DATA(cmd_info->data, sizeof(int), int,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_netdev_fix_features:
 		send_cmd_info->status = rte_netdev_fix_features(cmd_info->port_id,
-			GET_PTR(cmd_info->data, 0, uint64_t));
-		*GET_PTR(send_cmd_info->data, 0, uint64_t) = GET_DATA(cmd_info->data, 0, uint64_t,
+			VNI_GET_PTR(cmd_info->data, 0));
+		*(uint64_t *)VNI_GET_PTR(send_cmd_info->data, 0) =
+            VNI_GET_DATA(cmd_info->data, 0, uint64_t,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info));
 		send_cmd_info->data_length = sizeof(uint64_t);
 		break;
 	case vni_netdev_set_features:
 		send_cmd_info->status = rte_netdev_set_features(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, uint32_t,
+			VNI_GET_DATA(cmd_info->data, 0, uint32_t,
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;

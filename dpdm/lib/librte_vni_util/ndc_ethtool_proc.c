@@ -191,7 +191,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_ethtool_get_setting:
-		INIT_DATA(send_cmd_info->data, 0, sizeof(struct rte_dev_ethtool_cmd));
+		VNI_INIT_DATA(send_cmd_info->data, 0, sizeof(struct rte_dev_ethtool_cmd));
 		send_cmd_info->status = rte_ethtool_get_settings(cmd_info->port_id,
 			(struct rte_dev_ethtool_cmd *)send_cmd_info->data);
 		{
@@ -212,7 +212,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_cmd);
 		break;
 	case vni_ethtool_get_drvinfo:
-		INIT_DATA(send_cmd_info->data, 0, sizeof(struct rte_dev_ethtool_drvinfo));
+		VNI_INIT_DATA(send_cmd_info->data, 0, sizeof(struct rte_dev_ethtool_drvinfo));
 		send_cmd_info->status = rte_ethtool_get_drvinfo(cmd_info->port_id,
 			(struct rte_dev_ethtool_drvinfo *)send_cmd_info->data);
 		RTE_VNI_DEBUG_TRACE("drvinfo: name=%s\n", ((struct rte_dev_ethtool_drvinfo *)send_cmd_info->data)->driver);
@@ -224,14 +224,14 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_ethtool_get_reg:
 		reg_info = (struct rte_dev_ethtool_reg *)send_cmd_info->data;
-		COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_reg));
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_reg));
 		send_cmd_info->status = rte_ethtool_get_reg(cmd_info->port_id,
 			(struct rte_dev_ethtool_reg *)send_cmd_info->data,
-			GET_PTR(send_cmd_info, sizeof(struct rte_dev_ethtool_reg), void));
+			VNI_GET_PTR(send_cmd_info, sizeof(struct rte_dev_ethtool_reg)));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_reg)+reg_info->len;
 		break;
 	case vni_ethtool_get_wol:
-		COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_wolinfo));
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_wolinfo));
 		send_cmd_info->status = rte_ethtool_get_wol(cmd_info->port_id,
 			(struct rte_dev_ethtool_wolinfo *)send_cmd_info->data);
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_wolinfo);
@@ -247,7 +247,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_ethtool_set_msglevel:
 		send_cmd_info->status = rte_ethtool_set_msglevel(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length));
+			VNI_GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length));
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_ethtool_nway_reset:
@@ -263,11 +263,11 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_ethtool_get_eeprom:
-		COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_eeprom));
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_eeprom));
 		eeprom_info = (struct rte_dev_ethtool_eeprom *)send_cmd_info->data;
 		send_cmd_info->status = rte_ethtool_get_eeprom(cmd_info->port_id,
 			(struct rte_dev_ethtool_eeprom *)send_cmd_info->data,
-			GET_PTR(send_cmd_info->data, sizeof(struct rte_dev_ethtool_eeprom), uint8_t));
+			VNI_GET_PTR(send_cmd_info->data, sizeof(struct rte_dev_ethtool_eeprom)));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_eeprom)+eeprom_info->len;
 		break;
 	case vni_ethtool_set_eeprom:
@@ -277,7 +277,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 			eeprom_info, (uint8_t *)&buf[sizeof(struct rte_dev_ethtool_eeprom)]);
 		break;
 	case vni_ethtool_get_coalesce:
-		COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_coalesce));
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data, sizeof(struct rte_dev_ethtool_coalesce));
 		send_cmd_info->status = rte_ethtool_get_coalesce(cmd_info->port_id,
 			(struct rte_dev_ethtool_coalesce *)send_cmd_info->data);
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_coalesce);
@@ -288,7 +288,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_ethtool_get_ringparam:
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_ringparam));
 		send_cmd_info->status = rte_ethtool_get_ringparam(cmd_info->port_id,
 			(struct rte_dev_ethtool_ringparam *)send_cmd_info->data);
@@ -300,7 +300,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_ethtool_get_pauseparam:
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_pauseparam));
 		send_cmd_info->status = rte_ethtool_get_pauseparam(cmd_info->port_id,
 			(struct rte_dev_ethtool_pauseparam *)send_cmd_info->data);
@@ -316,20 +316,20 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->status = rte_ethtool_self_test(cmd_info->port_id,
 			(struct rte_dev_ethtool_test *)cmd_info->data,
 			(uint64_t *)&buf[sizeof(struct rte_dev_ethtool_test)]);
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_test));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_test);
 		break;
 	case vni_ethtool_get_strings:
 		sset_count = rte_ethtool_get_sset_count(cmd_info->port_id, ETH_SS_PRIV_FLAGS);
 		send_cmd_info->status = rte_ethtool_get_strings(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length),
-			GET_PTR(send_cmd_info->data, 0, uint8_t));
+			VNI_GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length),
+			VNI_GET_PTR(send_cmd_info->data, 0));
 		send_cmd_info->data_length = sset_count*ETH_GSTRING_LEN;
 		break;
 	case vni_ethtool_set_phys_id:
 		send_cmd_info->status = rte_ethtool_set_phys_id(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, enum rte_dev_ethtool_phys_id_state, cmd_info->data_length));
+			VNI_GET_DATA(cmd_info->data, 0, enum rte_dev_ethtool_phys_id_state, cmd_info->data_length));
 		send_cmd_info->data_length = 0;
 		break;
 	/* TODO: instead of passing string pointer, passing the entire stat string */
@@ -356,7 +356,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->data_length = 0;
 		break;
 	case vni_ethtool_set_priv_flags:
-		priv_flag = GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length);
+		priv_flag = VNI_GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length);
 		if (VF_FLAG_IS_VF(priv_flag))
 			send_cmd_info->status = ethtool_set_vf_priv_flat(cmd_info->port_id, priv_flag);
 		else {
@@ -368,7 +368,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_ethtool_get_sset_count:
 		send_cmd_info->status = rte_ethtool_get_sset_count(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, int, 
+			VNI_GET_DATA(cmd_info->data, 0, int, 
 			sizeof(cmd_info)-sizeof(struct netdev_cmd_info)));
 		send_cmd_info->data_length = 0;
 		break;
@@ -418,7 +418,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 	case vni_ethtool_get_channels:
 		send_cmd_info->status = rte_ethtool_get_channels(cmd_info->port_id,
 			(struct rte_dev_ethtool_channels *)cmd_info->data);
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_channels));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_channels);
 		break;
@@ -430,7 +430,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 	case vni_ethtool_get_dump_flag:
 		send_cmd_info->status = rte_ethtool_get_dump_flag(cmd_info->port_id,
 			(struct rte_dev_ethtool_dump *)cmd_info->data);
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_dump));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_dump);
 		break;
@@ -440,7 +440,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		send_cmd_info->status = rte_ethtool_get_dump_data(cmd_info->port_id,
 			dump,
 			(void *)(&buf[sizeof(struct rte_dev_ethtool_dump)]));
-		COPY_DATA(send_cmd_info->data, dump,
+		VNI_COPY_DATA(send_cmd_info->data, dump,
 			sizeof(struct rte_dev_ethtool_dump));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_dump)+
 			dump->len;
@@ -453,14 +453,14 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 	case vni_ethtool_get_ts_info:
 		send_cmd_info->status = rte_ethtool_get_ts_info(cmd_info->port_id,
 			(struct rte_dev_ethtool_ts_info *)cmd_info->data);
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_ts_info));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_ts_info);
 		break;
 	case vni_ethtool_get_module_info:
 		send_cmd_info->status = rte_ethtool_get_module_info(cmd_info->port_id,
 			(struct rte_dev_ethtool_modinfo *)cmd_info->data);
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_modinfo));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_modinfo);
 		break;
@@ -468,9 +468,9 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		buf = (unsigned char *)send_cmd_info->data;
 		eeprom_info = (struct rte_dev_ethtool_eeprom *)cmd_info->data;
 		send_cmd_info->status = rte_ethtool_get_module_eeprom(cmd_info->port_id,
-			eeprom_info, GET_PTR(send_cmd_info->data, sizeof(struct rte_dev_ethtool_eeprom),
-			uint8_t));
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+			eeprom_info, VNI_GET_PTR(send_cmd_info->data,
+            sizeof(struct rte_dev_ethtool_eeprom)));
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_eeprom));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_eeprom) +
 			eeprom_info->len;
@@ -478,7 +478,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 	case vni_ethtool_get_eee:
 		send_cmd_info->status = rte_ethtool_get_eee(cmd_info->port_id,
 			(struct rte_dev_ethtool_eee *)cmd_info->data);
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_eee));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_eee);
 		break;
@@ -491,8 +491,8 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		buf = (unsigned char *)cmd_info->data;
 		tun = (struct rte_dev_ethtool_tunable *)cmd_info->data;
 		send_cmd_info->status = rte_ethtool_get_tunable(cmd_info->port_id,
-			tun, GET_PTR(cmd_info, 0, void));
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+			tun, VNI_GET_PTR(cmd_info, 0));
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_tunable));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_tunable) +
 			tun->len;
@@ -505,15 +505,15 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_ethtool_get_per_queue_coalesce:
 		send_cmd_info->status = rte_ethtool_get_per_queue_coalesce(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length), 
+			VNI_GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length), 
 			(struct rte_dev_ethtool_coalesce *)((uint8_t *)cmd_info->data + sizeof(uint32_t)));
-		COPY_DATA(send_cmd_info->data, cmd_info->data,
+		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
 			sizeof(struct rte_dev_ethtool_coalesce));
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_coalesce);
 		break;
 	case vni_ethtool_set_per_queue_coalesce:
 		send_cmd_info->status = rte_ethtool_set_per_queue_coalesce(cmd_info->port_id,
-			GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length),
+			VNI_GET_DATA(cmd_info->data, 0, uint32_t, cmd_info->data_length),
 			(struct rte_dev_ethtool_coalesce *)((uint8_t *)cmd_info->data + sizeof(uint32_t)));
 		send_cmd_info->data_length = 0;
 		break;
