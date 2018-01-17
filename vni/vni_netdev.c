@@ -363,37 +363,13 @@ vni_set_vf_vlan(struct net_device *dev, int vf, u16 vlan,
 }
 #endif
 
-#ifdef SUPPORT_SET_VF_RATE
-#ifdef NEW_SET_VF_RATE
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
 static int
 vni_set_vf_rate(struct net_device *dev, int vf, int min_tx_rate, int max_tx_rate)
-{
-	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
-	unsigned char *buf;
-	
-	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_rate,
-		sizeof(int) + sizeof(int) + sizeof(int));
-	if (!k2u_cmd_info)
-		return -1;
-	buf = (unsigned char *)k2u_cmd_info->data;
-		
-	memcpy(buf, &vf, sizeof(int));
-	buf += sizeof(int);
-	
-	memcpy(buf, &min_tx_rate, sizeof(int));
-	buf += sizeof(int);
-
-	memcpy(buf, &max_tx_rate, sizeof(int));
-
-	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
-	if(!u2k_cmd_info)
-		return -1;
-
-	return u2k_cmd_info->status;
-}
 #else
 static int
 vni_set_vf_rate(struct net_device *dev, int vf, int rate)
+#endif
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
@@ -406,8 +382,12 @@ vni_set_vf_rate(struct net_device *dev, int vf, int rate)
 		
 	memcpy(buf, &vf, sizeof(int));
 	buf += sizeof(int);
-	
+
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
+	memcpy(buf, &min_tx_rate, sizeof(int));
+#else
 	memcpy(buf, &rate, sizeof(int));
+#endif
 
 	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
 	if(!u2k_cmd_info)
@@ -415,8 +395,6 @@ vni_set_vf_rate(struct net_device *dev, int vf, int rate)
 
 	return u2k_cmd_info->status;
 }
-#endif
-#endif
 
 static int
 vni_set_vf_spoofchk(struct net_device *dev, int vf, bool setting)
@@ -561,8 +539,10 @@ static struct net_device_ops vni_netdev_ops =
 	.ndo_vlan_rx_kill_vid	= vni_vlan_rx_kill_vid,
 	.ndo_set_vf_mac			= vni_set_vf_mac_addr,
 	.ndo_set_vf_vlan		= vni_set_vf_vlan,
-#ifdef SUPPORT_SET_VF_RATE
-	.ndo_set_vf_rate		= vni_set_vf_rate,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
+    .ndo_set_vf_rate        = vni_set_vf_rate,
+#else
+	.ndo_set_vf_tx_rate		= vni_set_vf_rate,
 #endif
 	.ndo_set_vf_spoofchk	= vni_set_vf_spoofchk,
 	.ndo_get_vf_config		= vni_get_vf_config,
