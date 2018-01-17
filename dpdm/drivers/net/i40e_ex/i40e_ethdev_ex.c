@@ -1744,9 +1744,11 @@ i40e_get_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_da
 	memcpy(&dev_ex->netdev_data.perm_addr, &dev->data->mac_addrs[0], ETHER_ADDR_LEN);
 	memcpy(&dev_ex->netdev_data.dev_addr, &dev->data->mac_addrs[0], ETHER_ADDR_LEN);
 	dev_ex->netdev_data.mtu = dev->data->mtu;
-	dev_ex->netdev_data.flags = dev_ex->dev_iff_flag;
+    dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
+    dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
+    dev_ex->netdev_data.flags = dev_ex->dev_iff_flag;
+    memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 
-	memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 	return 0;
 }
 
@@ -1758,7 +1760,8 @@ i40e_set_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_da
 
 	old_flag = dev_ex->netdev_data.flags;
 	change = old_flag ^ netdev_data->flags;
-	memcpy((void *)&dev_ex->netdev_data, netdev_data, sizeof(struct netdev_priv_data));
+
+    memcpy((void *)&dev_ex->netdev_data, netdev_data, sizeof(struct netdev_priv_data));
 	if (memcmp(netdev_data->perm_addr, &dev->data->mac_addrs[0], ETHER_ADDR_LEN))
 		dev->dev_ops->mac_addr_set(dev, (void *)netdev_data->perm_addr);
 

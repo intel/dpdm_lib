@@ -444,11 +444,12 @@ void get_netdevice(struct net_device *dev,
 void set_netdevice(struct net_device *dev,
 	struct netdev_priv_data *netdev_data)
 {
-	dev->features = netdev_data->features;
-	dev->hw_features = netdev_data->hw_features;
-	dev->addr_len = netdev_data->addr_len;
-	dev->mtu = netdev_data->mtu;
-	memcpy(dev->perm_addr, netdev_data->perm_addr, netdev_data->addr_len);
+    dev->features = netdev_data->features;
+    dev->hw_features = netdev_data->hw_features;
+    dev->addr_len = netdev_data->addr_len;
+    dev->mtu = netdev_data->mtu;
+    dev->type = netdev_data->type;
+    memcpy(dev->perm_addr, netdev_data->perm_addr, netdev_data->addr_len);
 }
 
 
@@ -470,7 +471,6 @@ static void connect_netdev_op(struct net_device *dev,
 	/* permanent addr								*/
 	set_netdevice(dev, priv_data);
 	dev->dev_addr = dev->perm_addr;
-	dev->type = 1; /* ARPHRD_ETHER */
 }
 
 pid_t get_info_from_inf(char *name, unsigned short *port_id)

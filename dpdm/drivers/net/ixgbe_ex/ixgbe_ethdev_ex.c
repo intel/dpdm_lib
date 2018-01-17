@@ -1107,6 +1107,8 @@ ixgbe_get_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_d
 	memcpy(&dev_ex->netdev_data.dev_addr, hw->mac.perm_addr, ETHER_ADDR_LEN);
 	dev_ex->netdev_data.mtu = dev->data->mtu;
     dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
+    dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
+    dev_ex->netdev_data.flags = dev_ex->dev_iff_flag;
 	memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 
 	return 0;

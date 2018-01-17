@@ -166,11 +166,12 @@ struct common_stats64 {
 struct netdev_priv_data {
 	unsigned long long hw_features;
 	unsigned long long features;
+	unsigned int mtu;
+	unsigned int flags;
+    unsigned short type;
 	unsigned char perm_addr[32];
 	unsigned char dev_addr[32];
 	unsigned char addr_len;
-	unsigned int mtu;
-	unsigned int flags;
 };
 
 struct inf_info {
