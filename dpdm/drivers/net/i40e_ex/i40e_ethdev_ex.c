@@ -1645,9 +1645,9 @@ i40e_set_ringparam(struct rte_eth_dev *dev,
 static int
 i40e_get_priv_flags(struct rte_eth_dev *dev)
 {
-//	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
-	/* TODO, need to return i40e private flag */
-	return 0;
+	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
+
+	return dev_ex->priv_flag;
 }
 
 static int
@@ -1655,11 +1655,15 @@ i40e_set_priv_flags(struct rte_eth_dev *dev, u32 flags)
 {
 	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
 	int i, vf_id, on, mask;
-	/* TODO, need to set i40e private flag */
-	dev_ex->dev_iff_flag = flags;
-	if (!VF_FLAG_IS_VF(flags))
+
+    dev_ex->priv_flag = flags;
+	if (!VF_FLAG_IS_VF(flags)) {
 		/* PF private flag */
+	    /* TODO: review which private flag features are supported in kernel*/
+        /* driver, and implement the same feature here                    */
+        PMD_DRV_LOG(INFO, "No support of \"ethtool --set-priv-flags\"\n");
 		return 0;
+    }
 
 	vf_id = VF_FLAG_VF_INDEX(flags);
 	if ((dev_ex->vf_flags[vf_id] & VF_FLAG_MASK) ==

@@ -168,6 +168,7 @@ struct netdev_priv_data {
 	unsigned long long features;
 	unsigned int mtu;
 	unsigned int flags;
+    unsigned int link;
     unsigned short type;
 	unsigned char perm_addr[32];
 	unsigned char dev_addr[32];

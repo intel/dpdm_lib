@@ -24,10 +24,14 @@
 #include <linux/version.h>
 #include <linux/delay.h>
 #include <linux/pci.h>
+#include <linux/netdevice.h>
 #include "vni.h"
 #include "vni_share_types.h"
 
 #include "vni_netdev_flags.h"
+
+#define LINK_STATE_START_MASK (1 << __LINK_STATE_START)
+
 #define rte_feature(netdev, rte, feature) \
 	if (netdev & feature) \
 		rte |= RTE_##feature
@@ -435,6 +439,11 @@ void get_netdevice(struct net_device *dev,
 	netdev_data->hw_features = dev->hw_features;
 	netdev_data->addr_len = dev->addr_len;
 	netdev_data->mtu = dev->mtu;
+    netdev_data->flags = dev->flags;
+    if (dev->state & LINK_STATE_START_MASK)
+        netdev_data->link = 1;
+    else
+        netdev_data->link = 0;
 	memcpy(netdev_data->perm_addr, dev->perm_addr, netdev_data->addr_len);
 	memcpy(netdev_data->dev_addr, dev->dev_addr, netdev_data->addr_len);
 	if(!memcmp(dev->dev_addr, dev->perm_addr, netdev_data->addr_len))
@@ -449,6 +458,15 @@ void set_netdevice(struct net_device *dev,
     dev->addr_len = netdev_data->addr_len;
     dev->mtu = netdev_data->mtu;
     dev->type = netdev_data->type;
+    dev->flags = netdev_data->flags;
+    if (netdev_data->link) {
+        dev->state |= LINK_STATE_START_MASK;
+        dev->operstate = IF_OPER_UP;
+    } else {
+        dev->state &= ~LINK_STATE_START_MASK;
+        dev->operstate = IF_OPER_DOWN;
+    }
+
     memcpy(dev->perm_addr, netdev_data->perm_addr, netdev_data->addr_len);
 }
 

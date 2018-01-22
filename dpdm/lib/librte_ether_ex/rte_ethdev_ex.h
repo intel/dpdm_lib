@@ -56,10 +56,10 @@ struct rte_eth_dev_ex {
 	struct common_vf_info vf_info[RTE_MAX_VF_COUNT];
 
 	unsigned int is_vf;
-	unsigned int dev_netif_flag;
-	unsigned int dev_iff_flag;
+    unsigned int priv_flag; /* use by "ethtool --set-priv-flag */
+	unsigned int dev_iff_flag; /* match kernel IFF flag */
 	unsigned int dev_state;
-	unsigned int vf_flags[RTE_MAX_VF_COUNT];
+	unsigned int vf_flags[RTE_MAX_VF_COUNT]; /* per-vf private flag */
 	union mask vf_mask[RTE_MAX_VF_COUNT];
 	union mask queue_mask;
 
@@ -75,6 +75,7 @@ struct rte_eth_drv_info {
 	const char *drv_name;
 };
 
-void rte_eth_get_dev_ex_by_port(port_t port_id, struct rte_eth_dev **dev, struct rte_eth_dev_ex **dev_ex);
+void rte_eth_get_dev_ex_by_port(port_t port_id, struct rte_eth_dev **dev,
+    struct rte_eth_dev_ex **dev_ex);
 
 #endif /* _RTE_ETHDEV_EX_H_ */

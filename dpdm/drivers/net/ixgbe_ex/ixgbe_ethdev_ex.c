@@ -64,6 +64,7 @@
 #endif
 
 static int eth_ixgbe_dev_init_ex(struct rte_eth_dev *dev);
+static unsigned int ixgbe_dev_get_iff_flag(struct rte_eth_dev *dev);
 
 /* ethtool_op APIs */
 static int ixgbe_get_reg_length(struct rte_eth_dev *dev);
@@ -1008,8 +1009,8 @@ static int
 ixgbe_get_priv_flags(struct rte_eth_dev *dev)
 {
 	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
-	/* TODO, need to return ixgbe private flag */
-	return dev_ex->dev_iff_flag;
+
+	return dev_ex->priv_flag;
 }
 
 static int
@@ -1017,11 +1018,15 @@ ixgbe_set_priv_flags(struct rte_eth_dev *dev, u32 flags)
 {
 	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
 	int i, vf_id, on, mask;
-	/* TODO, need to set ixgbe private flag */
-	dev_ex->dev_iff_flag = flags;
-	if (!VF_FLAG_IS_VF(flags))
+
+    dev_ex->priv_flag = flags;
+	if (!VF_FLAG_IS_VF(flags)) {
 		/* PF private flag */
+	    /* TODO: review which private flag features are supported in kernel*/
+        /* driver, and implement the same feature here                    */
+        PMD_DRV_LOG(INFO, "No support of \"ethtool --set-priv-flags\"\n");
 		return 0;
+    }
 
 	vf_id = VF_FLAG_VF_INDEX(flags);
 	if ((dev_ex->vf_flags[vf_id] & VF_FLAG_MASK) ==
@@ -1108,7 +1113,8 @@ ixgbe_get_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_d
 	dev_ex->netdev_data.mtu = dev->data->mtu;
     dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
     dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
-    dev_ex->netdev_data.flags = dev_ex->dev_iff_flag;
+    dev_ex->netdev_data.flags = ixgbe_dev_get_iff_flag(dev);
+    dev_ex->netdev_data.link = ixgbe_get_link(dev); 
 	memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 
 	return 0;
@@ -2282,6 +2288,44 @@ ixgbe_macsec_select_rxsa(struct rte_eth_dev *dev, uint8_t idx, uint8_t an,
 }
 #endif
 
+static unsigned int
+ixgbe_dev_get_iff_flag(struct rte_eth_dev *dev)
+{
+	struct rte_eth_dev_ex *dev_ex = rte_eth_get_devex_by_dev(dev);
+	struct ixgbe_hw *hw = IXGBE_DEV_PRIVATE_TO_HW(dev->data->dev_private);
+    unsigned int reg_value;
+    unsigned int iff_flag = 0;
+
+    if (ixgbe_get_link(dev))
+        iff_flag |= RTE_IFF_UP;
+    else
+        iff_flag &= ~RTE_IFF_UP;
+
+	reg_value = IXGBE_READ_REG(hw, IXGBE_FCTRL);
+    if (reg_value & IXGBE_FCTRL_BAM)
+        iff_flag |= RTE_IFF_BROADCAST;
+    else
+        iff_flag &= ~RTE_IFF_BROADCAST;
+
+    if (reg_value & IXGBE_FCTRL_MPE)
+        iff_flag |= RTE_IFF_ALLMULTI;
+    else
+        iff_flag &= ~RTE_IFF_ALLMULTI;
+
+    if (reg_value & IXGBE_FCTRL_UPE)
+        iff_flag |= RTE_IFF_PROMISC;
+    else
+        iff_flag &= ~RTE_IFF_PROMISC;
+
+    reg_value = IXGBE_READ_REG(hw, IXGBE_PFDTXGSWC);
+	if (reg_value & IXGBE_PFDTXGSWC_VT_LBEN)
+        iff_flag |= RTE_IFF_LOOPBACK;
+    else
+        iff_flag &= ~RTE_IFF_LOOPBACK;
+
+    return iff_flag;      
+}
+
 static int
 ixgbe_dev_init(struct rte_eth_dev *dev)
 {
@@ -2298,6 +2342,7 @@ ixgbe_dev_init(struct rte_eth_dev *dev)
 	dev_ex->netdev_data.hw_features = dev_ex->netdev_data.features;
 	dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
 	memcpy(&dev_ex->netdev_data.perm_addr, hw->mac.perm_addr, ETHER_ADDR_LEN);
+    dev_ex->dev_iff_flag = ixgbe_dev_get_iff_flag(dev);
 
 	return 0;
 }
