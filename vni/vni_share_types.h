@@ -50,6 +50,8 @@ typedef enum netdev_cmd_type {
 	vni_netdev_set_vf_rate,
 	vni_netdev_set_vf_spoofchk,
 	vni_netdev_get_vf_config,
+    vni_netdev_set_vf_link_state,
+    vin_netdev_get_vf_stat,
 	vni_netdev_set_vf_trust,
 	vni_netdev_fix_features,
 	vni_netdev_set_features,

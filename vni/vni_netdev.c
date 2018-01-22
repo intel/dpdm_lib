@@ -159,7 +159,7 @@ vni_tx_timeout(struct net_device *dev)
 		dev->name, status);
 }
 
-#ifdef NEW_GET_STATS64
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,11,0)
 static void
 vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 {
@@ -171,8 +171,7 @@ vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 		(get_info_from_inf(dev->name,&port_id) == 0))
 		return;
 
-	u2k_cmd_info = k2u_link_1var_other(dev, vni_netdev_get_stats64,
-		stats, sizeof(struct common_stats64));
+	u2k_cmd_info = k2u_link_0var(dev, vni_netdev_get_stats64);
 	if(!u2k_cmd_info)
 		return -1;
 
@@ -180,7 +179,7 @@ vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 		vni_elog("netdev_get_stats (inf: %s)failed with error code: %d\n",
 		dev->name, u2k_cmd_info->status);
 	} else
-		common_stats64_to_rtnl_stats(stats, u2k_cmd_info->data);
+		common_stats64_to_rtnl_stats(stats, (void *)u2k_cmd_info->data);
 }
 #else
 static struct rtnl_link_stats64*
@@ -197,8 +196,7 @@ vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 		return &ret_stats;
 	}
 	
-	u2k_cmd_info = k2u_link_1var_other(dev, vni_netdev_get_stats64,
-		stats, sizeof(struct common_stats64));
+	u2k_cmd_info = k2u_link_0var(dev, vni_netdev_get_stats64);
 	if(!u2k_cmd_info)
 		return &ret_stats;
 
@@ -206,7 +204,7 @@ vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 		vni_elog("vni: netdev_get_stats64 (inf: %s)failed with error code: %d\n",
 		dev->name, u2k_cmd_info->status);
 	} else
-		common_stats64_to_rtnl_stats(&ret_stats, (struct common_stats64 *)u2k_cmd_info->data);
+		common_stats64_to_rtnl_stats(&ret_stats, (void *)u2k_cmd_info->data);
 	
 	return &ret_stats; 
 }
@@ -217,8 +215,7 @@ vni_get_stats(struct net_device *dev)
 {
 	static struct net_device_stats ret_stats;
 
-	netdev_cmd_info *u2k_cmd_info = k2u_link_1var_other(dev, vni_netdev_get_stats,
-		&ret_stats, sizeof(struct common_stats64));
+	netdev_cmd_info *u2k_cmd_info = k2u_link_0var(dev, vni_netdev_get_stats);
 	if(!u2k_cmd_info)
 		return &ret_stats;
 
@@ -396,6 +393,52 @@ vni_set_vf_rate(struct net_device *dev, int vf, int rate)
 	return u2k_cmd_info->status;
 }
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,2,0)
+static int
+vni_get_vf_stats(struct net_device *dev, int vf, struct ifla_vf_stats *stats)
+{
+	netdev_cmd_info *u2k_cmd_info;
+	unsigned short port_id;
+
+	u2k_cmd_info = k2u_link_1var_other(dev, vin_netdev_get_vf_stat,
+        vf, sizeof(int));
+	if(!u2k_cmd_info)
+		return &ret_stats;
+
+	if (u2k_cmd_info->status < 0) {
+		vni_elog("vni: netdev_get_stats64 (inf: %s)failed with error code: %d\n",
+		dev->name, u2k_cmd_info->status);
+	} else {
+		stats->rx_packets = 
+	
+	return &ret_stats; 
+}
+
+static int
+vni_set_vf_link_state(struct net_device *dev, int vf, int link_state)
+{
+	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
+	unsigned char *buf;
+	
+	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_link_state,
+		sizeof(int) + sizeof(bool));
+	if (!k2u_cmd_info)
+		return -1;
+	buf = (unsigned char *)k2u_cmd_info->data;
+		
+	memcpy(buf, &vf, sizeof(int));
+	buf += sizeof(int);
+	
+	memcpy(buf, &setting, sizeof(bool));
+
+	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
+	if(!u2k_cmd_info)
+		return -1;
+
+	return u2k_cmd_info->status;
+}
+#endif
+
 static int
 vni_set_vf_spoofchk(struct net_device *dev, int vf, bool setting)
 {
@@ -546,6 +589,10 @@ static struct net_device_ops vni_netdev_ops =
 #endif
 	.ndo_set_vf_spoofchk	= vni_set_vf_spoofchk,
 	.ndo_get_vf_config		= vni_get_vf_config,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
+    .ndo_get_vf_stats       = vni_get_vf_stats,
+    .ndo_set_vf_link_state  = vni_set_vf_link_state,
+#endif
 #ifdef SUPPORT_SET_VF_TRUST
 	.ndo_set_vf_trust		= vni_set_vf_trust,
 #endif

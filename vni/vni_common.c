@@ -133,6 +133,8 @@ const char *cmd_name(netdev_cmd_type cmd)
 		"vni_netdev_set_vf_rate",
 		"vni_netdev_set_vf_spoofchk",
 		"vni_netdev_get_vf_config",
+        "vni_netdev_set_vf_link_state",
+        "vin_netdev_get_vf_stat",
 		"vni_netdev_set_vf_trust",
 		"vni_netdev_fix_features",
 		"vni_netdev_set_features"
@@ -354,7 +356,6 @@ netdev_cmd_info *k2u_uplink(struct net_device *dev, netdev_cmd_info *k2u_cmd_inf
 	return get_u2k_netdev_cmd();
 }
 
-
 int k2u_link(struct net_device *dev, netdev_cmd_type cmd)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
@@ -372,8 +373,22 @@ int k2u_link(struct net_device *dev, netdev_cmd_type cmd)
 	return u2k_cmd_info->status;
 }
 
-netdev_cmd_info *k2u_link_1var_other(struct net_device *dev, netdev_cmd_type cmd,
-											void *var, size_t data_size)
+netdev_cmd_info *k2u_link_0var(struct net_device *dev, netdev_cmd_type cmd)
+{
+	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
+
+	k2u_cmd_info = k2u_downlink(dev, cmd, 0);
+	if(!k2u_cmd_info) {
+		return NULL;
+	}
+
+	return k2u_uplink(dev, k2u_cmd_info);
+}
+
+netdev_cmd_info *k2u_link_1var_other(struct net_device *dev,
+                                     netdev_cmd_type cmd,
+                                     void *var,
+                                     size_t data_size)
 {
 	netdev_cmd_info *k2u_cmd_info;
 

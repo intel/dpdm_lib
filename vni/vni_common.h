@@ -79,7 +79,8 @@ netdev_cmd_info *k2u_uplink(struct net_device *dev,
 int k2u_link(struct net_device *dev, netdev_cmd_type cmd);
 netdev_cmd_info *k2u_link_1var_other(struct net_device *dev,
 	netdev_cmd_type cmd, void *var, size_t data_size);
-
+netdev_cmd_info *k2u_link_0var(struct net_device *dev,
+    netdev_cmd_type cmd);
 int k2u_link_1var_noupdate(struct net_device *dev,
 	netdev_cmd_type cmd, void *var, size_t data_size);
 
