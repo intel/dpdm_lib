@@ -51,6 +51,7 @@
 #define MAXI_RECV_SIZE 1024
 #define MAXI_NETLINK_CHANNEL 128
 #define MAXI_REP_COUNT 5
+#define NAME_DELIMITER ','
 
 struct netlink_data {
 	int sock_fd;
@@ -272,7 +273,7 @@ static void parse_inf_name(char *name_string, int count,
 	for(i = 0; i < count; i++) {
 		inf_name = inf_info[i].inf_name;
 		memset(inf_name, 0, sizeof(inf_info[i].inf_name));
-		next_str = strchr(curr_str, (int)'!');
+		next_str = strchr(curr_str, (int)NAME_DELIMITER);
 		if (!next_str) {
 			if (curr_str == name_string)
 				snprintf(inf_name, MAXI_INTERFACE_NAME, "%s%d", curr_str, i);
@@ -548,7 +549,7 @@ void rte_ndc_session_stop(rte_atomic32_t *state)
  * inf_name: interface name for netdev. for a multiple port
  *	configuraiton, two naming choices: 
  *	1. base-name with port-id as suffix
- *	2. each port has its own interface name; use token "!" to
+ *	2. each port has its own interface name; use token "," to
  *		separate inteface name
  *
  * num_of_ports: number of netdev interface to be created for
