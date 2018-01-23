@@ -42,6 +42,7 @@
 #include <errno.h>
 
 #include <rte_atomic.h>
+#include <rte_ethdev.h>
 #include "rte_netdev_ops.h"
 #include "ndc_types.h"
 #include "ndc.h"
@@ -340,6 +341,7 @@ ndc_nl_data_alloc(char *inf_name, int num_of_ports, pid_t dest_pid)
 	parse_inf_name(inf_name, num_of_ports, nl_data->inf_info);
 	{
 		struct rte_pci_addr addr;
+        struct rte_eth_txq_info qinfo;
 
 		for(i = 0; i < num_of_ports; i++) {
 			rte_eth_get_pci_addr(i, &addr);
@@ -348,6 +350,8 @@ ndc_nl_data_alloc(char *inf_name, int num_of_ports, pid_t dest_pid)
 			nl_data->inf_info[i].pci_addr.devid = addr.devid;
 			nl_data->inf_info[i].pci_addr.function = addr.function;
 			rte_ethtool_get_netdev_data(i, (void *)&nl_data->inf_info[i].data);
+            rte_eth_tx_queue_info_get(i, 0, &qinfo);
+            nl_data->inf_info[i].data.nb_tx_desc = qinfo.nb_desc;
 		}
 	}
 	ndc_recv_msgbuf_init(nl_data);

@@ -474,6 +474,7 @@ void set_netdevice(struct net_device *dev,
     dev->mtu = netdev_data->mtu;
     dev->type = netdev_data->type;
     dev->flags = netdev_data->flags;
+    dev->tx_queue_len = netdev_data->nb_tx_desc;
     if (netdev_data->link) {
         dev->state |= LINK_STATE_START_MASK;
         dev->operstate = IF_OPER_UP;
@@ -770,7 +771,8 @@ static struct sock *vni_socket(int mode, struct sock *new_socket)
 		return g_socket;
 
 	g_socket = new_socket;
-		return NULL;
+
+    return NULL;
 }
 
 void vni_set_socket(struct sock *sock)

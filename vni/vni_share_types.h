@@ -172,6 +172,7 @@ struct netdev_priv_data {
 	unsigned int flags;
     unsigned int link;
     unsigned short type;
+    unsigned short nb_tx_desc;
 	unsigned char perm_addr[32];
 	unsigned char dev_addr[32];
 	unsigned char addr_len;

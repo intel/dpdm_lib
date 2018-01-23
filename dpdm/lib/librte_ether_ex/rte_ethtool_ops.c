@@ -45,6 +45,8 @@ rte_ethtool_get_netdev_data(port_t port_id, struct netdev_priv_data *netdev_data
 {
 	struct rte_eth_dev_ex *dev_ex;
 	struct rte_eth_dev *dev;
+    struct rte_eth_txq_info tx_qinfo;
+    int status;
 
 	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -ENODEV);
 	rte_eth_get_devs_by_port(port_id, &dev_ex, &dev);
@@ -52,8 +54,15 @@ rte_ethtool_get_netdev_data(port_t port_id, struct netdev_priv_data *netdev_data
 	if (!dev || !dev_ex || !dev_ex->dev_ethtool_ops)
 		return -ENODEV;
 	RTE_FUNC_PTR_OR_ERR_RET(*dev_ex->dev_ethtool_ops->get_netdev_data, -ENOTSUP);
-	return (*dev_ex->dev_ethtool_ops->get_netdev_data)(dev, netdev_data);
+    RTE_FUNC_PTR_OR_ERR_RET(*dev->dev_ops->txq_info_get, -ENOTSUP);
 
+	status = (*dev_ex->dev_ethtool_ops->get_netdev_data)(dev, netdev_data);
+    if (!status) {
+        /* get tx queue info */
+        (*dev->dev_ops->txq_info_get)(dev, 0, &tx_qinfo);
+        netdev_data->nb_tx_desc = tx_qinfo.nb_desc;
+    }
+    return status;
 }
 
 int
