@@ -375,7 +375,7 @@ int k2u_link(struct net_device *dev, netdev_cmd_type cmd)
 
 netdev_cmd_info *k2u_link_0var(struct net_device *dev, netdev_cmd_type cmd)
 {
-	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
+	netdev_cmd_info *k2u_cmd_info;
 
 	k2u_cmd_info = k2u_downlink(dev, cmd, 0);
 	if(!k2u_cmd_info) {
