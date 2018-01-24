@@ -38,6 +38,8 @@
 #include <rte_ethtool_ops.h>
 #include <vni_share_types.h>
 
+#include "rte_if_flags.h"
+
 extern int rte_eth_dev_is_valid_port(port_t);
 
 int
@@ -61,6 +63,13 @@ rte_ethtool_get_netdev_data(port_t port_id, struct netdev_priv_data *netdev_data
         /* get tx queue info */
         (*dev->dev_ops->txq_info_get)(dev, 0, &tx_qinfo);
         netdev_data->nb_tx_desc = tx_qinfo.nb_desc;
+        if (rte_ethtool_get_link(port_id)) {
+            netdev_data->flags |= RTE_IFF_UP;
+            netdev_data->link = 1;
+        } else {
+            netdev_data->flags &= ~RTE_IFF_UP;
+            netdev_data->link = 0;
+        }
     }
     return status;
 }
@@ -234,16 +243,11 @@ rte_ethtool_nway_reset(port_t port_id)
 int
 rte_ethtool_get_link(port_t port_id)
 {
-	struct rte_eth_dev_ex *dev_ex;
-	struct rte_eth_dev *dev;
+	struct rte_eth_link link;
 
-	RTE_ETH_VALID_PORTID_OR_ERR_RET(port_id, -ENODEV);
-	rte_eth_get_devs_by_port(port_id, &dev_ex, &dev);
-	
-	if (!dev || !dev_ex || !dev_ex->dev_ethtool_ops)
-		return -ENODEV;
-	RTE_FUNC_PTR_OR_ERR_RET(*dev_ex->dev_ethtool_ops->get_link, -ENOTSUP);
-	return (*dev_ex->dev_ethtool_ops->get_link)(dev);
+    rte_eth_link_get(port_id, &link);
+
+    return link.link_status;
 }
 
 int

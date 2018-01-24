@@ -1404,26 +1404,6 @@ i40e_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drvinf
 }
 
 static int
-i40e_get_link(struct rte_eth_dev *dev)
-{
-	struct rte_eth_link link, *dst, *src;
-
-	link.link_status = 0;
-	dst = &link;
-	if (dev->data->dev_conf.intr_conf.lsc != 0) {
-		src = &(dev->data->dev_link);
-		rte_atomic64_cmpset((uint64_t *)dst, *(uint64_t *)dst,
-			*(uint64_t *)src);
-	}
-	else {		
-		dev->dev_ops->link_update(dev, 1);
-		*dst = dev->data->dev_link;
-	}
-
-	return dst->link_status;
-}
-
-static int
 i40e_get_eeprom_len(struct rte_eth_dev *dev)
 {
 	return dev->dev_ops->get_eeprom_length(dev);
@@ -1750,7 +1730,6 @@ i40e_get_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_da
 	dev_ex->netdev_data.mtu = dev->data->mtu;
     dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
     dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
-    dev_ex->netdev_data.flags = dev_ex->dev_iff_flag;
     memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 
 	return 0;
@@ -1791,7 +1770,6 @@ static const struct eth_dev_ethtool_ops i40e_ethtool_ops = {
 	.get_regs_len = i40e_get_reg_length,
 	.get_regs = i40e_get_regs,
 	.get_drvinfo = i40e_get_drvinfo,
-	.get_link = i40e_get_link,
 	.get_eeprom_len = i40e_get_eeprom_len,
 	.get_eeprom = i40e_get_eeprom,
 	.set_eeprom = i40e_set_eeprom,

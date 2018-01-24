@@ -252,6 +252,8 @@ i40evf_get_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_
 	memcpy(&dev_ex->netdev_data.perm_addr, &dev->data->mac_addrs[0], ETHER_ADDR_LEN);
 	memcpy(&dev_ex->netdev_data.dev_addr, &dev->data->mac_addrs[0], ETHER_ADDR_LEN);
 	dev_ex->netdev_data.mtu = dev->data->mtu;
+    dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
+    dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
 
 	memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 	return 0;

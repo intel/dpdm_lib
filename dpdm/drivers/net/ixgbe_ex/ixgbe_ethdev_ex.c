@@ -766,26 +766,6 @@ ixgbe_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drvin
 }
 
 static int
-ixgbe_get_link(struct rte_eth_dev *dev)
-{
-	struct rte_eth_link link, *dst, *src;
-
-	link.link_status = 0;
-	dst = &link;
-	if (dev->data->dev_conf.intr_conf.lsc != 0) {
-		src = &(dev->data->dev_link);
-		rte_atomic64_cmpset((uint64_t *)dst, *(uint64_t *)dst,
-			*(uint64_t *)src);
-	}
-	else {		
-		dev->dev_ops->link_update(dev, 1);
-		*dst = dev->data->dev_link;
-	}
-
-	return dst->link_status;
-}
-
-static int
 ixgbe_get_eeprom_len(struct rte_eth_dev *dev)
 {
 	return dev->dev_ops->get_eeprom_length(dev);
@@ -1114,7 +1094,6 @@ ixgbe_get_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_d
     dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
     dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
     dev_ex->netdev_data.flags = ixgbe_dev_get_iff_flag(dev);
-    dev_ex->netdev_data.link = ixgbe_get_link(dev); 
 	memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 
 	return 0;
@@ -1158,7 +1137,6 @@ static const struct eth_dev_ethtool_ops ixgbe_ethtool_ops = {
 	.get_regs_len = ixgbe_get_reg_length,
 	.get_regs = ixgbe_get_regs,
 	.get_drvinfo = ixgbe_get_drvinfo,
-	.get_link = ixgbe_get_link,
 	.get_eeprom_len = ixgbe_get_eeprom_len,
 	.get_eeprom = ixgbe_get_eeprom,
 	.set_eeprom = ixgbe_set_eeprom,
@@ -2295,11 +2273,6 @@ ixgbe_dev_get_iff_flag(struct rte_eth_dev *dev)
 	struct ixgbe_hw *hw = IXGBE_DEV_PRIVATE_TO_HW(dev->data->dev_private);
     unsigned int reg_value;
     unsigned int iff_flag = 0;
-
-    if (ixgbe_get_link(dev))
-        iff_flag |= RTE_IFF_UP;
-    else
-        iff_flag &= ~RTE_IFF_UP;
 
 	reg_value = IXGBE_READ_REG(hw, IXGBE_FCTRL);
     if (reg_value & IXGBE_FCTRL_BAM)

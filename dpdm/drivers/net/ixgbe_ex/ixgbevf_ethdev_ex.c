@@ -72,6 +72,27 @@ static int ixgbevf_change_rx_flag(struct rte_eth_dev *dev, int flags);
 #define READ_REG_COUNT 0
 #define READ_REGISTERS 1
 
+static int
+ixgbevf_get_link(struct rte_eth_dev *dev)
+{
+	struct rte_eth_link link, *dst, *src;
+
+	link.link_status = 0;
+	dst = &link;
+	if (dev->data->dev_conf.intr_conf.lsc != 0) {
+		src = &(dev->data->dev_link);
+		rte_atomic64_cmpset((uint64_t *)dst, *(uint64_t *)dst,
+			*(uint64_t *)src);
+	}
+	else {		
+		dev->dev_ops->link_update(dev, 1);
+		*dst = dev->data->dev_link;
+	}
+
+	return dst->link_status;
+}
+
+
 static uint32_t
 ixgbevf_read_reg_set(struct ixgbe_hw *hw, struct rte_dev_reg_set *reg_set, uint32_t *reg,
 	uint32_t set_count)
@@ -279,7 +300,8 @@ ixgbevf_get_netdev_data(struct rte_eth_dev *dev,
 	memcpy(&dev_ex->netdev_data.perm_addr, hw->mac.perm_addr, ETHER_ADDR_LEN);
 	memcmp(netdev_data->dev_addr, hw->mac.perm_addr, ETHER_ADDR_LEN);
 	dev_ex->netdev_data.mtu = dev->data->mtu;
-
+    dev_ex->netdev_data.addr_len = ETHER_ADDR_LEN;
+    dev_ex->netdev_data.type = 1; /* ARPHRD_ETHER */
 	memcpy((void *)netdev_data, &dev_ex->netdev_data, sizeof(struct netdev_priv_data));
 	return 0;
 }
@@ -314,9 +336,12 @@ ixgbevf_set_netdev_data(struct rte_eth_dev *dev,
 }
 
 static const struct eth_dev_ethtool_ops ixgbevf_ethtool_ops = {
+	.get_netdev_data = ixgbevf_get_netdev_data,
+	.set_netdev_data = ixgbevf_set_netdev_data,
 	.get_regs_len = ixgbevf_get_reg_length,
 	.get_regs = ixgbevf_get_regs,
 	.get_drvinfo = ixgbevf_get_drvinfo,
+    .get_link = ixgbevf_get_link,
 	/* pseudo function */
 	.begin			= ixgbevf_begin,
 	.complete		= ixgbevf_complete,
@@ -356,6 +381,49 @@ ixgbevf_set_features(struct rte_eth_dev *dev, uint64_t features)
 			dev->dev_ops->vlan_offload_set(dev, 0);
 	}
 
+	return 0;
+}
+
+static int
+ixgbevf_validate_addr(struct rte_eth_dev *dev)
+{
+	struct ixgbe_hw *hw =IXGBE_DEV_PRIVATE_TO_HW(dev->data->dev_private);
+
+	if (is_valid_assigned_ether_addr((struct ether_addr *)hw->mac.addr))
+		return 1;
+	return 0;
+}
+
+static int
+ixgbevf_change_mtu(struct rte_eth_dev *dev, int mtu)
+{
+	return dev->dev_ops->mtu_set(dev, mtu);
+}
+
+static int
+ixgbevf_get_stats64(struct rte_eth_dev *dev, struct rte_eth_stats *out_stats)
+{
+	int i;
+	struct rte_eth_stats stats;
+
+	dev->dev_ops->stats_get(dev, &stats);
+	/* add old stats */
+	out_stats->ipackets += stats.ipackets;
+	out_stats->opackets += stats.opackets;
+	out_stats->ibytes += stats.ibytes;
+	out_stats->obytes += stats.obytes;
+	out_stats->imissed += stats.imissed;
+	out_stats->ierrors += stats.ierrors;
+	out_stats->oerrors += stats.oerrors;
+	out_stats->rx_nombuf += stats.rx_nombuf;
+
+	return 0;
+}
+
+static int
+ixgbevf_get_stats(struct rte_eth_dev *dev, struct rte_eth_stats *out_stats)
+{
+	dev->dev_ops->stats_get(dev, out_stats);
 	return 0;
 }
 
@@ -419,9 +487,14 @@ static const struct eth_dev_netdev_ops ixgbevf_netdev_ops = {
 	.uninit				= ixgbevf_dev_uninit,
 	.open				= ixgbevf_dev_start,
 	.stop				= ixgbevf_dev_stop,
+	.validate_addr		= ixgbevf_validate_addr,
+	.change_mtu			= ixgbevf_change_mtu,
+	.get_stats64		= ixgbevf_get_stats64,
+	.get_stats			= ixgbevf_get_stats,
 	.fix_features		= ixgbevf_fix_features,
 	.set_features		= ixgbevf_set_features,
 	.change_rx_flag		= ixgbevf_change_rx_flag,
+
 };
 
 static int
