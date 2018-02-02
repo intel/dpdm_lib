@@ -30,6 +30,10 @@
 
 #include "vni_netdev_flags.h"
 
+#ifndef NETIF_F_SCTP_CSUM
+#define NETIF_F_SCTP_CSUM NETIF_F_SCTP_CRC
+#endif
+
 #define LINK_STATE_START_MASK (1 << __LINK_STATE_START)
 
 #define rte_feature(netdev, rte, feature) \

@@ -523,7 +523,11 @@ vni_get_vf_config(struct net_device *dev, int vf,
 		vni_log("vni:  netdev_get_config (inf: %s) recv tx rate of (0x%x,0x%x)\n",
 			dev->name, us_vf_info->max_tx_rate, us_vf_info->min_tx_rate);
 #else
+#ifndef RH_KABI_REPLACE
 		ivf->tx_rate = us_vf_info->max_tx_rate;
+#else
+		ivf->max_tx_rate = us_vf_info->max_tx_rate;
+#endif
 		vni_log("vni:  netdev_get_config (inf: %s) recv tx rate of 0x%x\n",
 			dev->name, us_vf_info->max_tx_rate);
 #endif
@@ -581,7 +585,11 @@ static struct net_device_ops vni_netdev_ops =
 	.ndo_vlan_rx_add_vid	= vni_vlan_rx_add_vid,
 	.ndo_vlan_rx_kill_vid	= vni_vlan_rx_kill_vid,
 	.ndo_set_vf_mac			= vni_set_vf_mac_addr,
+#ifndef RH_KABI_RENAME
 	.ndo_set_vf_vlan		= vni_set_vf_vlan,
+#else
+	.ndo_set_vf_vlan_rh73	= vni_set_vf_vlan,
+#endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
     .ndo_set_vf_rate        = vni_set_vf_rate,
 #else
