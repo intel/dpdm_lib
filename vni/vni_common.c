@@ -325,6 +325,10 @@ netdev_cmd_info *k2u_downlink(struct net_device *dev, netdev_cmd_type cmd,
 									 size_t data_size)
 {
 	netdev_cmd_info *k2u_cmd_info;
+
+	vni_log("%s: Device addr[0]=0x%x addr-len=%d broadcast[0]=0x%x\n", cmd_name(cmd),
+		dev->dev_addr[0], dev->addr_len, dev->broadcast[0]);
+	
 	k2u_cmd_info = new_netlink_skbbuf(sizeof(netdev_cmd_info)+data_size);
 	if(k2u_cmd_info == NULL) {
 		vni_release_lock();
@@ -466,7 +470,9 @@ void get_netdevice(struct net_device *dev,
 	memcpy(netdev_data->perm_addr, dev->perm_addr, netdev_data->addr_len);
 	memcpy(netdev_data->dev_addr, dev->dev_addr, netdev_data->addr_len);
 	if(!memcmp(dev->dev_addr, dev->perm_addr, netdev_data->addr_len))
-		vni_log("Interface address change\n");
+		vni_log("Interface (%s) address change:\n\t"
+		"addr=%x addr-len=%d broadcast=%x", dev->name,
+		dev->dev_addr[0], dev->addr_len, dev->broadcast[0]);
 }
 
 void set_netdevice(struct net_device *dev,
@@ -474,7 +480,8 @@ void set_netdevice(struct net_device *dev,
 {
     dev->features = netdev_data->features;
     dev->hw_features = netdev_data->hw_features;
-    dev->addr_len = netdev_data->addr_len;
+	if (dev->addr_len != 1)
+		dev->addr_len = netdev_data->addr_len;
     dev->mtu = netdev_data->mtu;
     dev->type = netdev_data->type;
     dev->flags = netdev_data->flags;
@@ -487,7 +494,7 @@ void set_netdevice(struct net_device *dev,
         dev->operstate = IF_OPER_DOWN;
     }
 
-    memcpy(dev->perm_addr, netdev_data->perm_addr, netdev_data->addr_len);
+    memcpy(dev->perm_addr, netdev_data->perm_addr, MAC_ADDR_LEN);
 }
 
 

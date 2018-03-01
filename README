@@ -1,7 +1,8 @@
 Data Plane Device Management (DPDM) framework includes a set of user-space libraries (FreeBSD license)
 and a kernel module (GPL license), vni.ko. A DPDK application built with DPDM user-space libraries would
 enable the application to use traditional network management tools, such as ethtool, ip, ifconfig etc,
-to manage NIC devices which are bound with user-space DPDK device drivers.
+to manage NIC devices which are bound with a proxy driver (igb_uio, vfio-pci etc) which exposes driver
+resources for user-space DPDK device drivers.
 
 The DPDM user-space libraries are libraries based upon DPDK libraries, and they provide additional
 device-neutral APIs to support device management capabilities, mainly functions equivalent to kernel
@@ -14,7 +15,7 @@ To build DPDM user-space libraries, it requires
 		b. RTE_SDKEX: path for DPDM source code.
 		c. VNI_NETDEV: path for vni source code
 
-2. run dpdm/build_all.sh: 
+2. Run dpdm/build_all.sh: 
 	#cd dpdm
 	#./build_all.sh
 

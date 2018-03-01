@@ -33,6 +33,9 @@
 #ifndef _I40E_COMMON_H_
 #define _I40E_COMMON_H_
 
+#define I40E_MAX_VF_QUEUES		16
+#define I40E_MAX_PF_QUEUES      1536
+
 #ifndef ADVERTISED_40000baseKR4_Full
 #define SUPPORTED_40000baseKR4_Full	(1 << 23)
 #define SUPPORTED_40000baseCR4_Full	(1 << 24)

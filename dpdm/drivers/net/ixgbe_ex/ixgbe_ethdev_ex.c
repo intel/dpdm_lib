@@ -1439,7 +1439,7 @@ ixgbe_is_vf_enabled(struct rte_eth_dev *dev)
 
 	if (reg_val == 0)
 		return 1;
-	return reg_val;
+	return 0;
 }
 
 static int

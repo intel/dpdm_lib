@@ -417,9 +417,7 @@ void ethtool_cmd_proc(netdev_cmd_info *cmd_info, netdev_cmd_info *send_cmd_info)
 		break;
 	case vni_ethtool_get_channels:
 		send_cmd_info->status = rte_ethtool_get_channels(cmd_info->port_id,
-			(struct rte_dev_ethtool_channels *)cmd_info->data);
-		VNI_COPY_DATA(send_cmd_info->data, cmd_info->data,
-			sizeof(struct rte_dev_ethtool_channels));
+			(struct rte_dev_ethtool_channels *)send_cmd_info->data);
 		send_cmd_info->data_length = sizeof(struct rte_dev_ethtool_channels);
 		break;
 	case vni_ethtool_set_channels:

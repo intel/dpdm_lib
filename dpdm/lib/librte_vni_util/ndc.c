@@ -210,7 +210,7 @@ static void ndc_nl_data_release(struct netlink_data *nl_data)
 
 	if (i == nl_chan_dep) {
 		RTE_VNI_DEBUG_TRACE("missing nl_data link pointer with inf_name=%s nl_chap_dep=%d\n",
-			nl_data->inf_name);
+			nl_data->inf_info[0].inf_name);
 		return;
 	}
 	free(nl_data);
