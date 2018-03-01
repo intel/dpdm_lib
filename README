@@ -18,11 +18,9 @@ I. building DPDM framework libraries and kernel module.
 		a. RTE_SDK/RTE_TARGET: these two variables are used for locating DPDK build
 		b. RTE_SDKEX: path for DPDM source code.
 		c. VNI_NETDEV: path for vni source code
-
 	2. Build user-space libraries by running dpdm/build_all.sh: 
 	#cd dpdm
 	#./build_all.sh
-
 	3. Build DPDM kernel module, vni.ko, through make file.
 	#cd vni
 	#make
@@ -35,9 +33,9 @@ III. running the application. This requires instantiating the vni knerle module 
 
 IV. debugging. After vni.ko is installed, below sys files are created for debugging, tracking and others:
 	1. /sys/kernel/vni_manage/client_cache: used for user-space DPDM library to return
-							get-statistic.
-	2. /sys/kernel/vni_manage/get_stats_en: used by customer to turn on/off Netdev get-statistics which are
-							constantly invoked by kernel to retain NIC run-time traffic information.
-	3. /sys/kernel/vni_manage/trace: the most recent 4K debug message recorded from kernel and user-space
-							Netlink activities
+		get-statistic.
+	2. /sys/kernel/vni_manage/get_stats_en: used by customer to turn on/off Netdev get-statistics
+		which are constantly invoked by kernel to retain NIC run-time traffic information.
+	3. /sys/kernel/vni_manage/trace: the most recent 4K debug message recorded from kernel and
+		user-space Netlink activities.
  
