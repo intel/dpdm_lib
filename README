@@ -1,35 +1,43 @@
 Data Plane Device Management (DPDM) framework includes a set of user-space libraries (FreeBSD license)
 and a kernel module (GPL license), vni.ko. A DPDK application built with DPDM user-space libraries would
 enable the application to use traditional network management tools, such as ethtool, ip, ifconfig etc,
-to manage NIC devices which are bound with a proxy driver (igb_uio, vfio-pci etc) which exposes driver
-resources for user-space DPDK device drivers.
+to manage target NIC devices. A typical DPDK managed NIC devices is bound with a proxy kernel driver
+(igb_uio, vfio-pci etc) that exposes driver resources to user-space DPDK device drivers. But the
+proxy kernel driver itself doesn't support Netdev interface, therefore the user-space driver
+could not access Netdev interface based utilities. With DPDM framework, the vni.ko serves as conduit
+to pass requests from kernel Netdev interface to user-space DPDK drivers and returns the result back
+to vni then kernel Netdev interface.
 
 The DPDM user-space libraries are libraries based upon DPDK libraries, and they provide additional
 device-neutral APIs to support device management capabilities, mainly functions equivalent to kernel
 Netdev ops and a set of SR-IOV management functions. A high-level overview of DPDM can be found at
 dpdm/doc/DPDM.pdf
 
-To build DPDM user-space libraries, it requires 
-1. Creating four environment variables
+I. building DPDM framework libraries and kernel module. 
+	1. Creating four environment variables
 		a. RTE_SDK/RTE_TARGET: these two variables are used for locating DPDK build
 		b. RTE_SDKEX: path for DPDM source code.
 		c. VNI_NETDEV: path for vni source code
 
-2. Run dpdm/build_all.sh: 
+	2. Build user-space libraries by running dpdm/build_all.sh: 
 	#cd dpdm
 	#./build_all.sh
 
-To build DPDM kernel module, vni.ko.
+	3. Build DPDM kernel module, vni.ko, through make file.
 	#cd vni
 	#make
 
-To build an application with DPDM, please refer to dpdm/examples/test-vni/README
+II. building an application with DPDM, please refer to dpdm/examples/test-vni/README
 
-To instaniate DPDM kernel module, vni.ko.
+III. running the application. This requires instantiating the vni knerle module before
+	running user-space DPDK-based applications.
 	#insmod vni/vni.ko
 
-After vni.ko is installed, below sys files are created for debug, tracking and others.
-	- /sys/kernel/vni_manage/client_cache: used for user-space DPDM library to return VFD get-statistic result
-																				when working with ethtool
-	- /sys/kernel/vni_manage/get_stats_en: used by customer to turn on/off Netdev get-statistics
-	- /sys/kernel/vni_manage/trace: latest 4K debug message for kernel and user-space Netlink activities 
+IV. debugging. After vni.ko is installed, below sys files are created for debugging, tracking and others:
+	1. /sys/kernel/vni_manage/client_cache: used for user-space DPDM library to return
+							get-statistic.
+	2. /sys/kernel/vni_manage/get_stats_en: used by customer to turn on/off Netdev get-statistics which are
+							constantly invoked by kernel to retain NIC run-time traffic information.
+	3. /sys/kernel/vni_manage/trace: the most recent 4K debug message recorded from kernel and user-space
+							Netlink activities
+ 
