@@ -44,6 +44,7 @@
 #include <rte_atomic.h>
 #include <rte_ethdev.h>
 #include "rte_netdev_ops.h"
+#include "rte_ethtool_ops.h"
 #include "ndc_types.h"
 #include "ndc.h"
 

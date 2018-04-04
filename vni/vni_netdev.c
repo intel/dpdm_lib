@@ -164,16 +164,16 @@ static void
 vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 {
 	netdev_cmd_info *u2k_cmd_info;
-	unsigned char port_id;
+	unsigned short port_id;
 	
 	if (get_get_stats64_enable() == 0 ||
 		is_inf_closing(dev) ||
-		(get_info_from_inf(dev->name,&port_id) == 0))
+		(get_info_from_inf(dev->name, &port_id) == 0))
 		return;
 
 	u2k_cmd_info = k2u_link_0var(dev, vni_netdev_get_stats64);
 	if(!u2k_cmd_info)
-		return -1;
+		return;
 
 	if (u2k_cmd_info->status < 0) {
 		vni_elog("netdev_get_stats (inf: %s)failed with error code: %d\n",
@@ -299,7 +299,7 @@ vni_set_vf_mac_addr(struct net_device *dev, int vf, u8* mac)
 	return u2k_cmd_info->status;
 }
 
-#ifdef NEW_SET_VF_VLAN
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,7,0)
 static int
 vni_set_vf_vlan(struct net_device *dev, int vf, u16 vlan,
 					u8 qos, __be16 prot)
@@ -398,20 +398,26 @@ static int
 vni_get_vf_stats(struct net_device *dev, int vf, struct ifla_vf_stats *stats)
 {
 	netdev_cmd_info *u2k_cmd_info;
-	unsigned short port_id;
+    struct common_stats64 ret_stats;
 
 	u2k_cmd_info = k2u_link_1var_other(dev, vin_netdev_get_vf_stat,
-        vf, sizeof(int));
+        &ret_stats, sizeof(struct common_stats64));
 	if(!u2k_cmd_info)
-		return &ret_stats;
+		return -1;
 
 	if (u2k_cmd_info->status < 0) {
 		vni_elog("vni: netdev_get_stats64 (inf: %s)failed with error code: %d\n",
 		dev->name, u2k_cmd_info->status);
+        return -1;
 	} else {
-		stats->rx_packets = 
+        /* copy from common_stats64 to ifla_vf_stats */
+		stats->rx_packets = ret_stats.rx_packets;
+        stats->tx_packets = ret_stats.tx_packets;
+        stats->rx_bytes = ret_stats.rx_bytes;
+        stats->tx_bytes = ret_stats.tx_bytes;
+    }
 	
-	return &ret_stats; 
+	return 0; 
 }
 
 static int
@@ -429,7 +435,7 @@ vni_set_vf_link_state(struct net_device *dev, int vf, int link_state)
 	memcpy(buf, &vf, sizeof(int));
 	buf += sizeof(int);
 	
-	memcpy(buf, &setting, sizeof(bool));
+	memcpy(buf, &link_state, sizeof(int));
 
 	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
 	if(!u2k_cmd_info)

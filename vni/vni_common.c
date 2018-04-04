@@ -839,7 +839,9 @@ netdev_features_t rte_features(netdev_features_t netdev_flags)
 	rte_feature(netdev_flags, rte_flags, NETIF_F_LRO);
 	rte_feature(netdev_flags, rte_flags, NETIF_F_SCTP_CSUM);
 	rte_feature(netdev_flags, rte_flags, NETIF_F_TSO);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	rte_feature(netdev_flags, rte_flags, NETIF_F_UFO);
+#endif
 	rte_feature(netdev_flags, rte_flags, NETIF_F_TSO6);
 
 	return rte_flags;
@@ -886,7 +888,9 @@ netdev_features_t netdev_features(netdev_features_t rte_flags)
 	netdev_feature(netdev_flags, rte_flags, NETIF_F_LRO);
 	netdev_feature(netdev_flags, rte_flags, NETIF_F_SCTP_CSUM);
 	netdev_feature(netdev_flags, rte_flags, NETIF_F_TSO);
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4,14,0)
 	netdev_feature(netdev_flags, rte_flags, NETIF_F_UFO);
+#endif
 	netdev_feature(netdev_flags, rte_flags, NETIF_F_TSO6);
 
 	return netdev_flags;
