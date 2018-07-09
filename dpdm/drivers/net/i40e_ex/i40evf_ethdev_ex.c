@@ -177,6 +177,7 @@ i40evf_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drvi
 {
 	struct rte_eth_dev_info dev_info;
 	const char driver_name[] = "i40evf\0";
+	struct rte_pci_device *pci_dev;
 	int status = 0;
 
 	if (drvinfo == NULL)
@@ -209,13 +210,19 @@ i40evf_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drvi
 
 	memcpy(drvinfo->version, rte_version(), strlen(rte_version())+1);
 
-	if (dev_info.pci_dev)
+#if RTE_VERSION >= RTE_VERSION_NUM(18, 5, 0, 0)
+	pci_dev = container_of(dev_info.device, struct rte_pci_device, device);
+#else
+	pci_dev = dev_info.pci_dev;
+#endif
+	
+	if (pci_dev)
 		snprintf(drvinfo->bus_info, sizeof(drvinfo->bus_info),
 			"%04x:%02x:%02x.%x",
-			dev_info.pci_dev->addr.domain,
-			dev_info.pci_dev->addr.bus,
-			dev_info.pci_dev->addr.devid,
-			dev_info.pci_dev->addr.function);
+			pci_dev->addr.domain,
+			pci_dev->addr.bus,
+			pci_dev->addr.devid,
+			pci_dev->addr.function);
 	else
 		snprintf(drvinfo->bus_info, sizeof(drvinfo->bus_info),
 			"%04x:%02x:%02x.%x", 0, 0, 0, 0);
