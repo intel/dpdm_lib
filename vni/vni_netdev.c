@@ -419,7 +419,9 @@ vni_get_vf_stats(struct net_device *dev, int vf, struct ifla_vf_stats *stats)
 	
 	return 0; 
 }
+#endif
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0)
 static int
 vni_set_vf_link_state(struct net_device *dev, int vf, int link_state)
 {
@@ -603,8 +605,10 @@ static struct net_device_ops vni_netdev_ops =
 #endif
 	.ndo_set_vf_spoofchk	= vni_set_vf_spoofchk,
 	.ndo_get_vf_config		= vni_get_vf_config,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(4,2,0)
     .ndo_get_vf_stats       = vni_get_vf_stats,
+#endif
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0) 
     .ndo_set_vf_link_state  = vni_set_vf_link_state,
 #endif
 #ifdef SUPPORT_SET_VF_TRUST
