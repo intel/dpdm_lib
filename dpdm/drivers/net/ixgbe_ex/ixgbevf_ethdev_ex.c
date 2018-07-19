@@ -236,6 +236,9 @@ ixgbevf_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drv
 	const char driver_name[] = "ixgbevf\0";
 	struct rte_pci_device *pci_dev;
 	int status;
+#if RTE_VERSION >= RTE_VERSION_NUM(18, 5, 0, 0)
+	const struct rte_bus *bus = NULL;
+#endif
 
 	if (drvinfo == NULL)
 		return  -EINVAL;
@@ -259,7 +262,10 @@ ixgbevf_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drv
 	memcpy(drvinfo->version, rte_version(), strlen(rte_version())+1);
 
 #if RTE_VERSION >= RTE_VERSION_NUM(18, 5, 0, 0)
-	pci_dev = container_of(dev_info.device, struct rte_pci_device, device);
+	if (dev_info.device)
+		bus = rte_bus_find_by_device(dev_info.device);
+	if (bus && !strcmp(bus->name, "pci"))
+		pci_dev = RTE_DEV_TO_PCI(dev_info.device);
 #else
 	pci_dev = dev_info.pci_dev;
 #endif

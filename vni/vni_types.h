@@ -40,7 +40,7 @@ struct netdev_table {
 
 struct netdev_info_ext{
 	pid_t app_pid;
-	unsigned char port_id;
+	unsigned short port_id;
 };
 
 #endif /* _VNI_TYPES_H_ */
