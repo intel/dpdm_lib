@@ -59,7 +59,6 @@ static void vni_get_drvinfo(struct net_device *dev,
 	if (status < 0)
 		vni_elog("vni: get_drvinfo (inf: %s)failed with error"
 		" code: %d\n", dev->name, status);
-	printk(KERN_INFO "vni: vni_get_drvinfo: driver name=%s\n", drvinfo->driver);
 	return;
 }
 
