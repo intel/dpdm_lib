@@ -1,6 +1,6 @@
-diff -uNr dpdk-18.05/app/test-pmd/cmdline.c dpdk-18.05.mod/app/test-pmd/cmdline.c
---- dpdk-18.05/app/test-pmd/cmdline.c	2018-05-30 16:55:57.000000000 -0400
-+++ dpdk-18.05.mod/app/test-pmd/cmdline.c	2018-07-09 14:37:49.658162408 -0400
+diff -uNr a/app/test-pmd/cmdline.c b/app/test-pmd/cmdline.c
+--- a/app/test-pmd/cmdline.c	2018-05-30 16:55:57.000000000 -0400
++++ b/app/test-pmd/cmdline.c	2018-07-09 14:37:49.658162408 -0400
 @@ -1132,6 +1132,44 @@
  	},
  };
@@ -54,9 +54,9 @@ diff -uNr dpdk-18.05/app/test-pmd/cmdline.c dpdk-18.05.mod/app/test-pmd/cmdline.
  	(cmdline_parse_inst_t *)&cmd_operate_specific_port,
  	(cmdline_parse_inst_t *)&cmd_operate_attach_port,
  	(cmdline_parse_inst_t *)&cmd_operate_detach_port,
-diff -uNr dpdk-18.05/app/test-pmd/Makefile dpdk-18.05.mod/app/test-pmd/Makefile
---- dpdk-18.05/app/test-pmd/Makefile	2018-05-30 16:55:57.000000000 -0400
-+++ dpdk-18.05.mod/app/test-pmd/Makefile	2018-07-09 14:37:49.658162408 -0400
+diff -uNr a/app/test-pmd/Makefile b/app/test-pmd/Makefile
+--- a/app/test-pmd/Makefile	2018-05-30 16:55:57.000000000 -0400
++++ b/app/test-pmd/Makefile	2018-07-09 14:37:49.658162408 -0400
 @@ -70,7 +70,19 @@
  endif
  
@@ -77,9 +77,9 @@ diff -uNr dpdk-18.05/app/test-pmd/Makefile dpdk-18.05.mod/app/test-pmd/Makefile
  include $(RTE_SDK)/mk/rte.app.mk
  
  endif
-diff -uNr dpdk-18.05/app/test-pmd/parameters.c dpdk-18.05.mod/app/test-pmd/parameters.c
---- dpdk-18.05/app/test-pmd/parameters.c	2018-05-30 16:55:57.000000000 -0400
-+++ dpdk-18.05.mod/app/test-pmd/parameters.c	2018-07-09 14:37:49.659162408 -0400
+diff -uNr a/app/test-pmd/parameters.c b/app/test-pmd/parameters.c
+--- a/app/test-pmd/parameters.c	2018-05-30 16:55:57.000000000 -0400
++++ b/app/test-pmd/parameters.c	2018-07-09 14:37:49.659162408 -0400
 @@ -631,7 +631,7 @@
  	argvopt = argv;
  
@@ -108,9 +108,9 @@ diff -uNr dpdk-18.05/app/test-pmd/parameters.c dpdk-18.05.mod/app/test-pmd/param
  #endif
  		case 'a':
  			printf("Auto-start selected\n");
-diff -uNr dpdk-18.05/app/test-pmd/testpmd.c dpdk-18.05.mod/app/test-pmd/testpmd.c
---- dpdk-18.05/app/test-pmd/testpmd.c	2018-05-30 16:55:57.000000000 -0400
-+++ dpdk-18.05.mod/app/test-pmd/testpmd.c	2018-07-09 16:55:41.000000000 -0400
+diff -uNr a/app/test-pmd/testpmd.c b/app/test-pmd/testpmd.c
+--- a/app/test-pmd/testpmd.c	2018-05-30 16:55:57.000000000 -0400
++++ b/app/test-pmd/testpmd.c	2018-07-09 16:55:41.000000000 -0400
 @@ -61,7 +61,16 @@
  #include <rte_latencystats.h>
  #endif
@@ -247,9 +247,9 @@ diff -uNr dpdk-18.05/app/test-pmd/testpmd.c dpdk-18.05.mod/app/test-pmd/testpmd.
  	/* set all ports to promiscuous mode by default */
  	RTE_ETH_FOREACH_DEV(port_id)
  		rte_eth_promiscuous_enable(port_id);
-diff -uNr dpdk-18.05/app/test-pmd/testpmd.h dpdk-18.05.mod/app/test-pmd/testpmd.h
---- dpdk-18.05/app/test-pmd/testpmd.h	2018-05-30 16:55:57.000000000 -0400
-+++ dpdk-18.05.mod/app/test-pmd/testpmd.h	2018-07-09 14:49:10.000000000 -0400
+diff -uNr a/app/test-pmd/testpmd.h b/app/test-pmd/testpmd.h
+--- a/app/test-pmd/testpmd.h	2018-05-30 16:55:57.000000000 -0400
++++ b/app/test-pmd/testpmd.h	2018-07-09 14:49:10.000000000 -0400
 @@ -338,6 +338,9 @@
  extern uint8_t hot_plug; /**< enable by "--hot-plug" parameter */
  extern int do_mlockall; /**< set by "--mlockall" or "--no-mlockall" parameter */
