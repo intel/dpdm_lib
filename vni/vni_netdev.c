@@ -133,7 +133,7 @@ vni_do_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		sizeof(struct ifreq) + sizeof(int));
 	if (!k2u_cmd_info) 
 		return -1;
-		
+
 	memcpy(k2u_cmd_info->data, ifr, sizeof(struct ifreq));
 	memcpy((u8 *)((u8*)k2u_cmd_info->data+sizeof(struct ifreq)), &cmd, sizeof(int));
 
@@ -154,6 +154,7 @@ static void
 vni_tx_timeout(struct net_device *dev)
 {
 	int status = k2u_link(dev, vni_netdev_tx_timeout);
+
 	if (status < 0)
 		vni_elog("vni: netdev_tx_timeout (inf: %s)failed with error code: %d\n",
 		dev->name, status);
@@ -195,7 +196,7 @@ vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 		memset(&ret_stats, 0, sizeof(struct rtnl_link_stats64));
 		return &ret_stats;
 	}
-	
+
 	u2k_cmd_info = k2u_link_0var(dev, vni_netdev_get_stats64);
 	if(!u2k_cmd_info)
 		return &ret_stats;
@@ -205,7 +206,7 @@ vni_get_stats64(struct net_device *dev, struct rtnl_link_stats64 *stats)
 		dev->name, u2k_cmd_info->status);
 	} else
 		common_stats64_to_rtnl_stats(&ret_stats, (void *)u2k_cmd_info->data);
-	
+
 	return &ret_stats; 
 }
 #endif
@@ -223,7 +224,7 @@ vni_get_stats(struct net_device *dev)
 	if (u2k_cmd_info->status < 0)
 		vni_elog("vni: netdev_get_stats (inf: %s)failed with error code: %d\n",
 		dev->name, u2k_cmd_info->status);
-	
+
 	return &ret_stats; 
 }
 
@@ -232,16 +233,16 @@ vni_vlan_rx_add_vid(struct net_device *dev, __be16 prot, u16 vid)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_vlan_rx_add_vid,
 		sizeof(__be16) + sizeof(u16));
 	if (!k2u_cmd_info)
 		return -1;
 	buf = (unsigned char *)k2u_cmd_info->data;
-		
+
 	memcpy(buf, &prot, sizeof(__be16));
 	buf += sizeof(__be16);
-	
+
 	memcpy(buf, &vid, sizeof(u16));
 
 	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
@@ -256,16 +257,16 @@ vni_vlan_rx_kill_vid(struct net_device *dev, __be16 prot, u16 vid)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_vlan_rx_kill_vid,
 		sizeof(__be16) + sizeof(u16));
 	if (!k2u_cmd_info)
 		return -1;
 	buf = (unsigned char *)k2u_cmd_info->data;
-		
+
 	memcpy(buf, &prot, sizeof(__be16));
 	buf += sizeof(__be16);
-	
+
 	memcpy(buf, &vid, sizeof(u16));
 
 	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
@@ -286,10 +287,10 @@ vni_set_vf_mac_addr(struct net_device *dev, int vf, u8* mac)
 	if (!k2u_cmd_info)
 		return -1;
 	buf = (unsigned char *)k2u_cmd_info->data;
-		
+
 	memcpy(buf, &vf, sizeof(int));
 	buf += sizeof(int);
-	
+
 	memcpy(buf, mac, 6);
 
 	u2k_cmd_info = k2u_uplink(dev, k2u_cmd_info);
@@ -306,13 +307,13 @@ vni_set_vf_vlan(struct net_device *dev, int vf, u16 vlan,
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_vlan,
 		sizeof(int) + sizeof(u16) + sizeof(u8) + sizeof(__be16));
 	if (!k2u_cmd_info)
 		return -1;
 	buf = (unsigned char *)k2u_cmd_info->data;
-		
+
 	memcpy(buf, &vf, sizeof(int));
 	buf += sizeof(int);
 	
@@ -337,13 +338,13 @@ vni_set_vf_vlan(struct net_device *dev, int vf, u16 vlan,
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_vlan,
 		sizeof(int) + sizeof(u16) + sizeof(u8));
 	if (!k2u_cmd_info)
 		return -1;
 	buf = (unsigned char *)k2u_cmd_info->data;
-		
+
 	memcpy(buf, &vf, sizeof(int));
 	buf += sizeof(int);
 	
@@ -370,7 +371,7 @@ vni_set_vf_rate(struct net_device *dev, int vf, int rate)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_rate,
 		sizeof(int) + sizeof(int));
 	if (!k2u_cmd_info)
@@ -398,7 +399,7 @@ static int
 vni_get_vf_stats(struct net_device *dev, int vf, struct ifla_vf_stats *stats)
 {
 	netdev_cmd_info *u2k_cmd_info;
-    struct common_stats64 ret_stats;
+	struct common_stats64 ret_stats;
 
 	u2k_cmd_info = k2u_link_1var_other(dev, vin_netdev_get_vf_stat,
         &ret_stats, sizeof(struct common_stats64));
@@ -410,13 +411,13 @@ vni_get_vf_stats(struct net_device *dev, int vf, struct ifla_vf_stats *stats)
 		dev->name, u2k_cmd_info->status);
         return -1;
 	} else {
-        /* copy from common_stats64 to ifla_vf_stats */
+		/* copy from common_stats64 to ifla_vf_stats */
 		stats->rx_packets = ret_stats.rx_packets;
-        stats->tx_packets = ret_stats.tx_packets;
-        stats->rx_bytes = ret_stats.rx_bytes;
-        stats->tx_bytes = ret_stats.tx_bytes;
-    }
-	
+		stats->tx_packets = ret_stats.tx_packets;
+		stats->rx_bytes = ret_stats.rx_bytes;
+		stats->tx_bytes = ret_stats.tx_bytes;
+	}
+
 	return 0; 
 }
 #endif
@@ -427,7 +428,7 @@ vni_set_vf_link_state(struct net_device *dev, int vf, int link_state)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_link_state,
 		sizeof(int) + sizeof(bool));
 	if (!k2u_cmd_info)
@@ -452,7 +453,7 @@ vni_set_vf_spoofchk(struct net_device *dev, int vf, bool setting)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_spoofchk,
 		sizeof(int) + sizeof(bool));
 	if (!k2u_cmd_info)
@@ -477,7 +478,7 @@ vni_set_vf_trust(struct net_device *dev, int vf, bool setting)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	unsigned char *buf;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_set_vf_trust,
 		sizeof(int) + sizeof(bool));
 	if (!k2u_cmd_info)
@@ -503,7 +504,7 @@ vni_get_vf_config(struct net_device *dev, int vf,
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	struct common_vf_info *us_vf_info;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_netdev_get_vf_config,
 		sizeof(int) + sizeof(bool));		
 	if (!k2u_cmd_info)
@@ -599,17 +600,17 @@ static struct net_device_ops vni_netdev_ops =
 	.ndo_set_vf_vlan_rh73	= vni_set_vf_vlan,
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,16,0)
-    .ndo_set_vf_rate        = vni_set_vf_rate,
+	.ndo_set_vf_rate        = vni_set_vf_rate,
 #else
 	.ndo_set_vf_tx_rate		= vni_set_vf_rate,
 #endif
 	.ndo_set_vf_spoofchk	= vni_set_vf_spoofchk,
 	.ndo_get_vf_config		= vni_get_vf_config,
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(4,2,0)
-    .ndo_get_vf_stats       = vni_get_vf_stats,
+	.ndo_get_vf_stats       = vni_get_vf_stats,
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(3,11,0) 
-    .ndo_set_vf_link_state  = vni_set_vf_link_state,
+	.ndo_set_vf_link_state  = vni_set_vf_link_state,
 #endif
 #ifdef SUPPORT_SET_VF_TRUST
 	.ndo_set_vf_trust		= vni_set_vf_trust,

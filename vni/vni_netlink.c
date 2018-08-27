@@ -171,7 +171,7 @@ static void vni_nl_recv_msg(struct sk_buff *skb)
 	set_msg_state(msg_recv);
 	nlh = (struct nlmsghdr *)skb->data;
 	netdev_cmd = (netdev_cmd_info *)nlmsg_data(nlh);
-	
+
 	u2k_netdev_cmd = netdev_cmd;
 	/* vni_manage_add_inf and vni_manage_del_inf are initiated from user-space */
 	/* applicaiton, therefore there is no waiting kernel command packet */

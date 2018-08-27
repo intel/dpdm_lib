@@ -59,7 +59,7 @@ int is_inf_closing(struct net_device *net)
 	int i;
 	struct net_device *exiting_net;
 	int num_of_if;
-	
+
 	if (defer_netdev_client == INVALID_NETDEV_INDEX)
 		return 0;
 
@@ -328,7 +328,7 @@ netdev_cmd_info *k2u_downlink(struct net_device *dev, netdev_cmd_type cmd,
 
 	vni_log("%s: Device addr[0]=0x%x addr-len=%d broadcast[0]=0x%x\n", cmd_name(cmd),
 		dev->dev_addr[0], dev->addr_len, dev->broadcast[0]);
-	
+
 	k2u_cmd_info = new_netlink_skbbuf(sizeof(netdev_cmd_info)+data_size);
 	if(k2u_cmd_info == NULL) {
 		vni_release_lock();
@@ -462,11 +462,13 @@ void get_netdevice(struct net_device *dev,
 	netdev_data->hw_features = dev->hw_features;
 	netdev_data->addr_len = dev->addr_len;
 	netdev_data->mtu = dev->mtu;
-    netdev_data->flags = dev->flags;
-    if (dev->state & LINK_STATE_START_MASK)
-        netdev_data->link = 1;
-    else
-        netdev_data->link = 0;
+	netdev_data->flags = dev->flags;
+
+	if (dev->state & LINK_STATE_START_MASK)
+		netdev_data->link = 1;
+	else
+		netdev_data->link = 0;
+
 	memcpy(netdev_data->perm_addr, dev->perm_addr, netdev_data->addr_len);
 	memcpy(netdev_data->dev_addr, dev->dev_addr, netdev_data->addr_len);
 	if(!memcmp(dev->dev_addr, dev->perm_addr, netdev_data->addr_len))
@@ -478,23 +480,25 @@ void get_netdevice(struct net_device *dev,
 void set_netdevice(struct net_device *dev,
 	struct netdev_priv_data *netdev_data)
 {
-    dev->features = netdev_data->features;
-    dev->hw_features = netdev_data->hw_features;
+	dev->features = netdev_data->features;
+	dev->hw_features = netdev_data->hw_features;
 	if (dev->addr_len != 1)
 		dev->addr_len = netdev_data->addr_len;
-    dev->mtu = netdev_data->mtu;
-    dev->type = netdev_data->type;
-    dev->flags = netdev_data->flags;
-    dev->tx_queue_len = netdev_data->nb_tx_desc;
-    if (netdev_data->link) {
-        dev->state |= LINK_STATE_START_MASK;
-        dev->operstate = IF_OPER_UP;
-    } else {
-        dev->state &= ~LINK_STATE_START_MASK;
-        dev->operstate = IF_OPER_DOWN;
-    }
 
-    memcpy(dev->perm_addr, netdev_data->perm_addr, MAC_ADDR_LEN);
+	dev->mtu = netdev_data->mtu;
+	dev->type = netdev_data->type;
+	dev->flags = netdev_data->flags;
+	dev->tx_queue_len = netdev_data->nb_tx_desc;
+
+	if (netdev_data->link) {
+		dev->state |= LINK_STATE_START_MASK;
+		dev->operstate = IF_OPER_UP;
+	} else {
+		dev->state &= ~LINK_STATE_START_MASK;
+		dev->operstate = IF_OPER_DOWN;
+	}
+
+	memcpy(dev->perm_addr, netdev_data->perm_addr, MAC_ADDR_LEN);
 }
 
 
@@ -527,7 +531,6 @@ pid_t get_info_from_inf(char *name, unsigned short *port_id)
 			for(j = 0; j < netdev_tbl[i].num_of_if; j++) {
 				if (!strncmp(name, netdev_tbl[i].inf_set[j].inf_name,
 					strlen(name))) {
-					
 					*port_id = j;
 					return netdev_tbl[i].app_pid;
 				}
@@ -730,7 +733,7 @@ int vni_add_netdev_devices(struct netdev_cmd_info *req_info)
 		vni_log("Succeed register netdev with inf %s\n", netdev_ptr->name);
 		netdev_tbl[netdev_index].dev_ptr_table[i] = netdev_ptr;
 	}
-		
+
 	for(i = 0; i < num_of_ports; i++)
 		init_completion(&netdev_tbl[netdev_index].done[i]);
 
@@ -783,7 +786,7 @@ static struct sock *vni_socket(int mode, struct sock *new_socket)
 
 	g_socket = new_socket;
 
-    return NULL;
+	return NULL;
 }
 
 void vni_set_socket(struct sock *sock)
@@ -795,6 +798,7 @@ struct sock *vni_get_socket(void)
 {
 	return vni_socket(GET_SOCKET, NULL);
 }
+
 /*
  * Kernel version dependent feature definition conversion
  */

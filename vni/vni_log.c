@@ -40,7 +40,7 @@ void vlog(char *format, ...)
 	va_start(var_list, format);
 	length = vsnprintf(line_buf, MAXI_LINE, format, var_list);
 	va_end(var_list);
-	
+
 	length = length > MAXI_LINE? MAXI_LINE:length;
 
 	/* update log-data */

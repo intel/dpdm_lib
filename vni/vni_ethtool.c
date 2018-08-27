@@ -121,7 +121,7 @@ static int vni_nway_reset(struct net_device *dev)
 {
 	return k2u_link(dev, vni_ethtool_nway_reset);
 }
-	
+
 static u32 vni_get_link(struct net_device *dev)
 {
 	return (u32)k2u_link(dev, vni_ethtool_get_link);
@@ -133,7 +133,7 @@ static int vni_get_eeprom_len(struct net_device *dev)
 }
 
 static int vni_get_eeprom(struct net_device *dev, struct ethtool_eeprom *eeprom_info,
-						  u8 *data)
+						u8 *data)
 {
 	netdev_cmd_info *u2k_cmd_info = k2u_link_1var_other(dev,
 		vni_ethtool_get_eeprom, eeprom_info, sizeof(struct ethtool_eeprom));
@@ -153,7 +153,7 @@ static int vni_get_eeprom(struct net_device *dev, struct ethtool_eeprom *eeprom_
 }
 
 static int vni_set_eeprom(struct net_device *dev, struct ethtool_eeprom *eeprom_info,
-						  u8 *data)
+						u8 *data)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	
@@ -173,6 +173,7 @@ static int vni_set_eeprom(struct net_device *dev, struct ethtool_eeprom *eeprom_
 
 	return u2k_cmd_info->status;
 }
+
 static int vni_get_coalesce(struct net_device *dev, struct ethtool_coalesce *coalesce_info)
 {
 	return k2u_link_1var(dev, vni_ethtool_get_coalesce, coalesce_info,
@@ -184,7 +185,7 @@ static int vni_set_coalesce(struct net_device *dev, struct ethtool_coalesce *coa
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_coalesce, coalesce_info,
 		sizeof(struct ethtool_coalesce));
 }
-	
+
 static void vni_get_ringparam(struct net_device *dev, struct ethtool_ringparam *ring_info)
 {
 	int status = k2u_link_1var(dev, vni_ethtool_get_ringparam, ring_info,
@@ -194,34 +195,35 @@ static void vni_get_ringparam(struct net_device *dev, struct ethtool_ringparam *
 		dev->name, status);
 	return;
 }
-	
+
 static int vni_set_ringparam(struct net_device *dev, struct ethtool_ringparam *ring_info)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_ringparam, ring_info,
 		sizeof(struct ethtool_ringparam));
 }
-	
+
 static void vni_get_pauseparam(struct net_device *dev, struct ethtool_pauseparam *pause_info)
 {
 	int status = k2u_link_1var(dev, vni_ethtool_get_pauseparam, pause_info,
 		sizeof(struct ethtool_pauseparam));
+
 	if (status < 0) {
 		vni_elog("vni: get_pauseparam (inf: %s)failed with error code: %d\n",
 		dev->name, status);
 	}
-	else 
+	else
 	/* debug */
 		vni_dlog("vni: received pause frame info: autoneg: %x, rx_pause: %x tx_pause: %x\n",
 			pause_info->autoneg, pause_info->rx_pause, pause_info->tx_pause);
 	return;
 }
-	
+
 static int vni_set_pauseparam(struct net_device *dev, struct ethtool_pauseparam *ring_info)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_pauseparam, ring_info,
 		sizeof(struct ethtool_pauseparam));
 }
-	
+
 static void vni_self_test(struct net_device *dev, struct ethtool_test *test_info, u64 *ctx)
 {
 	netdev_cmd_info *u2k_cmd_info = k2u_link_1var_other(dev,
@@ -249,13 +251,13 @@ static void vni_get_strings(struct net_device *dev, u32 stringset, u8 *strings)
 
 	return;
 }
-	
+
 static int vni_set_phys_id(struct net_device *dev, enum ethtool_phys_id_state state)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_phys_id, &state,
 		sizeof(enum ethtool_phys_id_state));
 }
-	
+
 static void vni_get_stats(struct net_device *dev, struct ethtool_stats *stats, u64 *ctx)
 {
 	netdev_cmd_info *u2k_cmd_info = k2u_link_1var_other(dev, vni_ethtool_get_stats,
@@ -278,10 +280,11 @@ static int vni_begin(struct net_device *dev)
 	struct netdev_priv_data *netdev_data = netdev_priv(dev);
 	int status = k2u_link_1var(dev, vni_ethtool_begin, &remote_netdev_data,
 		sizeof(struct netdev_priv_data));
+
 	memcpy(netdev_data, &remote_netdev_data, sizeof(struct netdev_priv_data));
 	set_netdevice(dev, netdev_data);
 	vni_log("begin: features:%llx hw_features:%llx\n",
-		dev->features, dev->hw_features);	
+		dev->features, dev->hw_features);
 	return status;
 }
 
@@ -289,7 +292,7 @@ static void vni_complete(struct net_device *dev)
 {
 	struct netdev_priv_data *netdev_data = netdev_priv(dev);
 	int status;
-	
+
 	get_netdevice(dev, netdev_data);
 	vni_log("complete: features:%llx dw_features=%llx\n",
 		netdev_data->features, netdev_data->hw_features);
@@ -307,26 +310,26 @@ static u32 vni_get_priv_flags(struct net_device *dev)
 {
 	return (u32)k2u_link(dev, vni_ethtool_get_priv_flags);
 }
-	
+
 static int vni_set_priv_flags(struct net_device *dev, u32 flags)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_priv_flags,
-								  &flags, sizeof(u32));
+								&flags, sizeof(u32));
 }
-	
+
 static int vni_get_sset_count(struct net_device *dev, int sset)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_get_sset_count,
-								  &sset, sizeof(int));
+								&sset, sizeof(int));
 }
-	
+
 static int vni_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd, u32 *rule_locs)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
 	
 	k2u_cmd_info = k2u_downlink(dev, vni_ethtool_get_rxnfc,
 		sizeof(struct ethtool_rxnfc) + cmd->rule_cnt *sizeof(u32));
-		
+
 	if(!k2u_cmd_info)
 		return -1;
 	memcpy(k2u_cmd_info->data, cmd, sizeof(struct ethtool_rxnfc));
@@ -339,44 +342,44 @@ static int vni_get_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd, u32 
 
 	return u2k_cmd_info->status;
 }
-	
+
 static int vni_set_rxnfc(struct net_device *dev, struct ethtool_rxnfc *cmd)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_rxnfc,
-								  cmd, sizeof(struct ethtool_rxnfc));
+								cmd, sizeof(struct ethtool_rxnfc));
 }
-	
+
 static int vni_flash_device(struct net_device *dev, struct ethtool_flash *flash)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_flash_device,
-								  flash, sizeof(struct ethtool_flash));
+								flash, sizeof(struct ethtool_flash));
 }
-	
+
 static int vni_reset(struct net_device *dev, u32 *mask)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_reset,
-								  mask, sizeof(u32));
+								mask, sizeof(u32));
 }
 
-#ifdef RXFH_ALL	
+#ifdef RXFH_ALL
 static u32 vni_get_rxfh_key_size(struct net_device *dev)
 {
 	return (u32)k2u_link(dev, vni_ethtool_get_rxfh_key_size);
 }
-	
+
 static u32 vni_get_rxfh_indir_size(struct net_device *dev)
 {
 	return (u32)k2u_link(dev, vni_ethtool_get_rxfh_indir_size);
 }
-	
+
 static int vni_get_rxfh(struct net_device *dev, u32 *indir,
 						u8 *key, u8* hfunc)
 {
 	netdev_cmd_info *k2u_cmd_info, *u2k_cmd_info;
-	
+
 	k2u_cmd_info = k2u_downlink(dev, vni_ethtool_get_rxfh,
 		sizeof(indir) + sizeof(key));
-		
+
 	if(!k2u_cmd_info)
 		return -1;
 	memcpy(k2u_cmd_info->data, indir, sizeof(indir));
@@ -395,7 +398,7 @@ static int vni_get_rxfh(struct net_device *dev, u32 *indir,
 
 	return u2k_cmd_info->status;
 }
-	
+
 static int vni_set_rxfh(struct net_device *dev, u32 *indir,
 						u8 *key, u8* hfunc)
 {
@@ -403,7 +406,7 @@ static int vni_set_rxfh(struct net_device *dev, u32 *indir,
 	
 	k2u_cmd_info = k2u_downlink(dev, vni_ethtool_set_rxfh,
 		sizeof(indir) + sizeof(key) + sizeof(hfunc));
-		
+
 	if(!k2u_cmd_info)
 		return -1;
 	memcpy(k2u_cmd_info->data, indir, sizeof(indir));
@@ -418,7 +421,7 @@ static int vni_set_rxfh(struct net_device *dev, u32 *indir,
 
 	return u2k_cmd_info->status;
 }
-#endif	
+#endif
 
 static void vni_get_channels(struct net_device *dev, struct ethtool_channels *chan)
 {
@@ -430,20 +433,20 @@ static void vni_get_channels(struct net_device *dev, struct ethtool_channels *ch
 
 	return;
 }
-	
+
 static int vni_set_channels(struct net_device *dev, struct ethtool_channels *chan)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_channels,
 								  chan, sizeof(struct ethtool_channels));
 }
-	
+
 static int vni_get_dump_flag(struct net_device *dev,
 	struct ethtool_dump *dump)
 {
 	return k2u_link_1var(dev, vni_ethtool_get_dump_flag,
 								  dump, sizeof(struct ethtool_dump));
 }
-	
+
 static int vni_get_dump_data(struct net_device *dev,
 	struct ethtool_dump *dump, void *data)
 {
@@ -461,24 +464,24 @@ static int vni_get_dump_data(struct net_device *dev,
 
 	return u2k_cmd_info->status;
 }
-	
+
 static int vni_set_dump(struct net_device *dev,  struct ethtool_dump *dump)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_dump,
-								  dump, sizeof(struct ethtool_dump));
+								dump, sizeof(struct ethtool_dump));
 }
-	
+
 static int vni_get_ts_info(struct net_device *dev, struct ethtool_ts_info *ts_info)
 {
 	return k2u_link_1var(dev, vni_ethtool_get_ts_info,
-								  ts_info, sizeof(struct ethtool_ts_info));
+								ts_info, sizeof(struct ethtool_ts_info));
 }
-	
+
 static int vni_get_module_info(struct net_device *dev,
 	struct ethtool_modinfo *mod_info)
 {
 	return k2u_link_1var(dev, vni_ethtool_get_module_info,
-								  mod_info, sizeof(struct ethtool_modinfo));
+								mod_info, sizeof(struct ethtool_modinfo));
 }
 
 static int vni_get_module_eeprom(struct net_device *dev,
@@ -498,25 +501,26 @@ static int vni_get_module_eeprom(struct net_device *dev,
 
 	return u2k_cmd_info->status;
 }
-	
+
 static int vni_get_eee(struct net_device *dev, struct ethtool_eee *data)
 {
 	return k2u_link_1var(dev, vni_ethtool_get_eee,
-								  data, sizeof(struct ethtool_eee));
+								data, sizeof(struct ethtool_eee));
 }
-	
+
 static int vni_set_eee(struct net_device *dev, struct ethtool_eee *data)
 {
 	return k2u_link_1var_noupdate(dev, vni_ethtool_set_eee,
 								  data, sizeof(struct ethtool_eee));
 }
 
-#ifdef TUNABLE	
+#ifdef TUNABLE
 static int vni_get_tunable(struct net_device *dev,
 	const struct ethtool_tunable *data, void *ctx)
 {
 	netdev_cmd_info *u2k_cmd_info = k2u_link_1var_other(dev,
 		vni_ethtool_get_tunable, data, sizeof(struct ethtool_tunable));
+
 	if(!u2k_cmd_info)
 		return -1;
 
@@ -528,7 +532,7 @@ static int vni_get_tunable(struct net_device *dev,
 
 	return u2k_cmd_info->status;
 }
-	
+
 static int vni_set_tunable(struct net_device *dev,
 	const struct ethtool_tunable *data, const void *ctx)
 {
@@ -545,7 +549,7 @@ static int vni_get_per_queue_coalesce(struct net_device *dev, u32 queue,
 	
 	k2u_cmd_info = k2u_downlink(dev, vni_ethtool_get_per_queue_coalesce,
 		sizeof(u32) + sizeof(struct ethtool_coalesce));
-		
+
 	if(!k2u_cmd_info)
 		return -1;
 	memcpy((u8*)k2u_cmd_info->data, &queue, sizeof(u32));
@@ -563,7 +567,7 @@ static int vni_get_per_queue_coalesce(struct net_device *dev, u32 queue,
 
 	return u2k_cmd_info->status;
 }
-	
+
 static int vni_set_per_queue_coalesce(struct net_device *dev, u32 queue,
 	struct ethtool_coalesce *ec)
 {
@@ -571,7 +575,7 @@ static int vni_set_per_queue_coalesce(struct net_device *dev, u32 queue,
 	
 	k2u_cmd_info = k2u_downlink(dev, vni_ethtool_set_per_queue_coalesce,
 		sizeof(u32) + sizeof(struct ethtool_coalesce));
-		
+
 	if(!k2u_cmd_info)
 		return -1;
 	memcpy((u8*)k2u_cmd_info->data, &queue, sizeof(u32));
