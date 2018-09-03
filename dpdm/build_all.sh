@@ -40,13 +40,11 @@ fi
 # clean up build directory
 if [ -d $RTE_SDKEX/build ];
 then
-	rm -f $RTE_SDKEX/build/lib/*
-	rm -f $RTE_SDKEX/build/include/*
-else
-	mkdir -p $RTE_SDKEX/build
-	mkdir -p $RTE_SDKEX/build/lib
-	mkdir -p $RTE_SDKEX/build/include
+	rm -r -f $RTE_SDKEX/build
 fi
+mkdir -p $RTE_SDKEX/build
+mkdir -p $RTE_SDKEX/build/lib
+mkdir -p $RTE_SDKEX/build/include
 
 # gcc version detection
 major=$(expr `gcc -dumpversion | cut -f1 -d.` - "0")
@@ -99,7 +97,7 @@ cd $pwd
 
 # remove the old test-pmd if it exists
 # 
-[ -d $RTE_SDKEX/app/test-pmd ] && rm -r $RTE_SDKEX/app
+[ -d $RTE_SDKEX/app/test-pmd ] && rm -r -f $RTE_SDKEX/app
 
 
 # copy 
@@ -107,7 +105,7 @@ mkdir $RTE_SDKEX/app
 cp -r $RTE_SDK/app/test-pmd $RTE_SDKEX/app/.
 
 # apply patch
-dpdk=$(echo $RTE_SDK | grep -Po '(dpdk-\d+.\d+(-rc\d*)*)')
+dpdk=$(echo $RTE_SDK | grep -Po '(dpdk-\d+.\d+(.\d+)*(-rc\d*)*)')
 cd $RTE_SDKEX
 patch -p1 < $RTE_SDKEX/doc/testpmd-${dpdk}.patch
 
