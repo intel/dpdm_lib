@@ -1801,92 +1801,6 @@ i40e_set_netdev_data(struct rte_eth_dev *dev, struct netdev_priv_data *netdev_da
 }
 
 static int
-i40e_hw_rss_hash_set(struct i40e_pf *pf, struct rte_eth_rss_conf *rss_conf)
-{
-	struct i40e_hw *hw = I40E_PF_TO_HW(pf);
-	uint64_t hena;
-	int ret;
-
-	ret = i40e_set_rss_key(pf->main_vsi, rss_conf->rss_key,
-		rss_conf->rss_key_len);
-
-	if(ret)
-		return ret;
-
-	hena = i40e_config_hena(pf->adapter, rss_conf->rss_hf);
-	i40e_write_rx_ctl(hw, I40E_PFQF_HENA(0), (uint32_t)hena);
-	i40e_write_rx_ctl(hw, I40E_PFQF_HENA(1), (uint32_t)(hena >> 32));
-	I40E_WRITE_FLUSH(hw);
-
-	return 0;
-}
-
-static int
-i40e_pf_config_rss(struct i40e_pf *pf)
-{
-	struct i40e_hw *hw = I40E_PF_TO_HW(pf);
-	struct i40e_rx_queue *rxq;
-	struct rte_eth_rss_conf rss_conf;
-	struct rte_eth_dev_data *dev_data = pf->dev_data;
-	uint32_t i, lut = 0;
-	uint16_t j, num;
-
-	if (dev_data->dev_conf.rxmode.mq_mode & ETH_MQ_RX_VMDQ_FLAG) {
-		num = 0;
-		for (i = 0; i < pf->lan_nb_qps; i++) {
-			rxq = dev_data->rx_queues[i];
-			if(rxq && rxq->q_set)
-				num ++;
-			else
-				break;
-		}
-	} else
-		num = dev_data->nb_rx_queues;
-
-	num = (num > I40E_MAX_Q_PER_TC)?I40E_MAX_Q_PER_TC:num;
-	PMD_INIT_LOG(INFO, "Max of contiguous %u PF queue are configured",
-		num);
-
-	if (num == 0) {
-		PMD_DRV_LOG(ERR, "No PF queues are configured to enable RSS");
-		return -ENOTSUP;
-	}
-
-	for (i = 0, j = 0; i < hw->func_caps.rss_table_size; i++, j++) {
-		if (j == num)
-			j = 0;
-		lut = (lut << 8) |
-			(j & ((0x1 << hw->func_caps.rss_table_entry_width) - 1));
-		if ((i & 3) == 3)
-			I40E_WRITE_REG(hw, I40E_PFQF_HLUT(i >> 2), lut);
-	}
-
-	rss_conf = dev_data->dev_conf.rx_adv_conf.rss_conf;
-	if ((rss_conf.rss_hf & pf->adapter->flow_types_mask) == 0) {
-		/* disable RSS */
-		i40e_write_rx_ctl(hw, I40E_PFQF_HENA(0), 0);
-		i40e_write_rx_ctl(hw, I40E_PFQF_HENA(1), 0);
-		I40E_WRITE_FLUSH(hw);
-		return 0;
-	}
-
-	if (rss_conf.rss_key == NULL || rss_conf.rss_key_len <
-		(I40E_PFQF_HKEY_MAX_INDEX + 1) * sizeof(uint32_t)) {
-		/* Random default keys */
-		static uint32_t rss_key_default[] = {0x6b793944,
-			0x23504cb5, 0x5bea75b6, 0x309f4f12, 0x3dc0a2b8,
-			0x024ddcdf, 0x339b8ca0, 0x4c4af64a, 0x34fac605,
-			0x55d85839, 0x3a58997d, 0x2ec938e1, 0x66031581};
-
-		rss_conf.rss_key = (uint8_t *)rss_key_default;
-		rss_conf.rss_key_len = (I40E_PFQF_HKEY_MAX_INDEX + 1)*
-			sizeof(uint32_t);
-	}
-
-	return i40e_hw_rss_hash_set(pf, &rss_conf);
-}
-
-static int
 i40e_get_channels(struct rte_eth_dev *dev, struct rte_dev_ethtool_channels *ch)
 {
 	struct i40e_pf *pf = I40E_DEV_PRIVATE_TO_PF(dev->data->dev_private);
@@ -1900,64 +1814,6 @@ i40e_get_channels(struct rte_eth_dev *dev, struct rte_dev_ethtool_channels *ch)
         /* i40e support equal # rx/tx queue allocation */
         ch->combined_count = dev->data->nb_rx_queues*2;
     }
-
-	return 0;
-}
-
-static int
-i40e_set_channels(struct rte_eth_dev *dev, struct rte_dev_ethtool_channels *ch)
-{
-	unsigned int count = ch->combined_count;
-	struct i40e_pf *pf = I40E_DEV_PRIVATE_TO_PF(dev->data->dev_private);
-	struct i40e_vsi *vsi = pf->main_vsi;
-
-    if (vsi->type != I40E_VSI_MAIN)
-        return -EINVAL;
-
-	/* only support combine request */
-	if (!count || ch->rx_count || ch->tx_count)
-        return -EINVAL;
-
-	/* verify the number of channels does not exceed hardware limits */
-	if (i40e_is_vf_enabled(dev)) {
-		int vf_id;
-		uint32_t tval, rval;
-		struct i40e_hw *hw = I40E_PF_TO_HW(pf);
-
-		if (count > (2*I40E_MAX_VF_QUEUES))
-            return -EINVAL;
-		/*
-		 * To avoid trigger a PF-to-VF reset, which requires additional callback
-		 * functions registered, adding a restricion where changing of queue count
-		 * of this device is only permissible if 1) eitherthere is no VF instantiated
-		 * or 2)all the VFs are disabled/stop.
-		 *
-		 */
-		for(vf_id = 0 ; vf_id < pf->vf_num; vf_id++) {
-			tval = I40E_READ_REG(hw, I40E_VF_ATQLEN(vf_id));
-			rval = I40E_READ_REG(hw, I40E_VF_ARQLEN(vf_id));
-
-			if (tval & I40E_VF_ATQLEN_ATQENABLE_MASK ||
-				rval & I40E_VF_ARQLEN_ARQENABLE_MASK) {
-				PMD_DRV_LOG(ERR, "Could not change queue length when VF(%d)"
-					" is enabled!!!\n", vf_id);
-                return -EINVAL;
-			}
-		}
-        pf->vf_nb_qps = count >> 1;
-	} else {
-		if (count > (I40E_MAX_PF_QUEUES*2))
-            return -EINVAL;
-        pf->lan_nb_qps = count >> 1;
-	}
-
-	/* i40e drivers only support equal Rx/Tx queue configuration */
-	if (count != (dev->data->nb_rx_queues << 1)) {
-		vsi->nb_qps = count >> 1;
-        dev->data->nb_tx_queues = count >> 1;
-        dev->data->nb_rx_queues = count >> 1;
-		i40e_pf_config_rss(pf);
-	}
 
 	return 0;
 }
@@ -1982,7 +1838,6 @@ static const struct eth_dev_ethtool_ops i40e_ethtool_ops = {
 	.get_strings = i40e_get_strings,
 	.get_sset_count = i40e_get_sset_count,
 	.get_channels = i40e_get_channels,
-	.set_channels = i40e_set_channels,
 	/* pseudo function */
 	.begin	= i40e_begin,
 	.complete		= i40e_complete,
