@@ -89,38 +89,38 @@
 
 /* Private flags on VF configuration setting */
 static const char rte_priv_flags_strings[][ETH_GSTRING_LEN] = {
-	"split-drop.untag.b0",
-	"promisc.hash-mc.b1",
-	"allmulti.hash-uc.b2",
-	"broadcast.b3",
-	"spoofchk.mc.b4",
-	"link-state.b5",
-	"pf-ping-vf.b6",
-	"mac-antispoof.b7",
-	"vlan-antispoof.b8",
-	"vlan-stripq.b9",
-	"rx-queue-en.b10",
-	"tx-queue-en.b11",
-	"reset-stats.b12",
+	"b0", /* feature bit/Rx mode/VLAN */
+	"b1",
+	"b2",
+	"b3",
+	"b4",
+	"b5",
+	"b6",
+	"b7",
+	"b8",
+	"b9",
+	"b10",
+	"b11",
+	"b12",
 	"b13",
 	"b14",
-	"trusted.mode.b15",
-	"b16",
-	"b17",
-	"seq0",
-	"seq1",
-	"seq2",
-	"op-code0",
-	"op-code1",
-	"op-code2",
-	"vf-id0",
-	"vf-id1",
-	"vf-id2",
-	"vf-id3",
-	"vf-id4",
-	"vf-id5",
-	"vf-id6",
-	"vf-flag",
+	"b15",
+	"b16", /* reserved bit */
+	"b17", /* reserved bit */
+	"s0", /* sequence bit */
+	"s1",
+	"s2",
+	"op0", /* op-code bit */
+	"op1",
+	"op2",
+	"v0", /* vf index bit */
+	"v1",
+	"v2",
+	"v3",
+	"v4",
+	"v5",
+	"v6",
+	"enable-vfd", /* enable VFd priv-flags */
 };
 #define RTE_PRIV_FLAGS_STR_LEN \
 	(sizeof(rte_priv_flags_strings)/sizeof(rte_priv_flags_strings[0]))
