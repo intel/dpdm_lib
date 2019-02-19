@@ -105,9 +105,12 @@ mkdir $RTE_SDKEX/app
 cp -r $RTE_SDK/app/test-pmd $RTE_SDKEX/app/.
 
 # apply patch
-dpdk=$(echo $RTE_SDK | grep -Po '(dpdk-\d+.\d+(.\d+)*(-rc\d*)*)')
+dpdk_ver=$(echo $RTE_SDK | grep -Po '(dpdk-\d+.\d+(.\d+)*(-rc\d*)*)')
+test_pmd_patch=$(echo $dpdk_ver | grep -Po '(dpdk-\d+.\d+)')
 cd $RTE_SDKEX
-patch -p1 < $RTE_SDKEX/doc/testpmd-${dpdk}.patch
+
+echo "apply patch file testpmd-${test_pmd_patch}.patch"
+patch -p1 < $RTE_SDKEX/doc/testpmd-${test_pmd_patch}.patch
 
 # build integrated test-pmd
 cd $RTE_SDKEX/app/test-pmd
