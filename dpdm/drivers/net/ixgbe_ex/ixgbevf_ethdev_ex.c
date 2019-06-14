@@ -252,6 +252,9 @@ ixgbevf_get_drvinfo(struct rte_eth_dev *dev, struct rte_dev_ethtool_drvinfo *drv
 	snprintf(drvinfo->fw_version, 4, "N/A");
 #endif
 	memset(&dev_info, 0, sizeof(struct rte_eth_dev_info));
+#if RTE_VERSION >= RTE_VERSION_NUM(18, 5, 0, 0)
+	dev_info.device = dev->device;
+#endif
 	dev->dev_ops->dev_infos_get(dev, &dev_info);
 	if (dev_info.driver_name)
 		memcpy(drvinfo->driver, dev_info.driver_name,
