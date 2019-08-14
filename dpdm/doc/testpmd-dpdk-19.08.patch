@@ -1,0 +1,272 @@
+diff -uNr a/app/test-pmd/cmdline.c b/app/test-pmd/cmdline.c
+--- a/app/test-pmd/cmdline.c	2019-08-11 05:37:19.000000000 -0400
++++ b/app/test-pmd/cmdline.c	2019-08-13 16:32:27.245569389 -0400
+@@ -1285,6 +1285,44 @@
+ 	},
+ };
+ 
++/* *** open/close ndc (NetDev Client) *** */
++struct cmd_operate_ndc_result {
++	cmdline_fixed_string_t keyword;
++	cmdline_fixed_string_t name;
++	cmdline_fixed_string_t value;
++};
++
++static void cmd_operate_ndc_parsed(void *parsed_result,
++				__attribute__((unused)) struct cmdline *cl,
++				__attribute__((unused)) void *data)
++{
++	struct cmd_operate_ndc_result *res = parsed_result;
++
++	if (!strcmp(res->name, "open"))
++		open_ndc();
++	else if (!strcmp(res->name, "close"))
++		close_ndc();
++	else
++		printf("Unknown parameter\n");
++}
++
++cmdline_parse_token_string_t cmd_operate_ndc_all_cmd =
++	TOKEN_STRING_INITIALIZER(struct cmd_operate_ndc_result, keyword,
++								"ndc");
++cmdline_parse_token_string_t cmd_operate_ndc_all_port =
++	TOKEN_STRING_INITIALIZER(struct cmd_operate_ndc_result, name,
++						"open#close");
++
++cmdline_parse_inst_t cmd_operate_ndc = {
++	.f = cmd_operate_ndc_parsed,
++	.data = NULL,
++	.help_str = "ndc open|close: Open/Close ndc interface",
++	.tokens = {
++		(void *)&cmd_operate_ndc_all_cmd,
++		(void *)&cmd_operate_ndc_all_port,
++		NULL,
++	},
++};
+ 
+ /* *** start/stop/close all ports *** */
+ struct cmd_operate_port_result {
+@@ -18917,6 +18955,7 @@
+ 	(cmdline_parse_inst_t *)&cmd_set_qmap,
+ 	(cmdline_parse_inst_t *)&cmd_set_xstats_hide_zero,
+ 	(cmdline_parse_inst_t *)&cmd_operate_port,
++	(cmdline_parse_inst_t *)&cmd_operate_ndc,
+ 	(cmdline_parse_inst_t *)&cmd_operate_specific_port,
+ 	(cmdline_parse_inst_t *)&cmd_operate_attach_port,
+ 	(cmdline_parse_inst_t *)&cmd_operate_detach_port,
+diff -uNr a/app/test-pmd/Makefile b/app/test-pmd/Makefile
+--- a/app/test-pmd/Makefile	2019-08-11 05:37:19.000000000 -0400
++++ b/app/test-pmd/Makefile	2019-08-13 16:32:27.246569404 -0400
+@@ -72,6 +72,18 @@
+ 
+ endif
+ 
++# additional build flag set for using DPDM library
++CFLAGS += -I$(RTE_SDKEX)/build/include
++CFLAGS += -I$(VNI_NETDEV) -I$(PWD) -lpthread
++CFLAGS += $(WERROR_FLAGS)
++
++LDLIBS += -L$(RTE_SDKEX)/build/lib
++LDLIBS += --whole-archive
++LDLIBS += -lrte_ethdev_ex
++LDLIBS += -lrte_pmd_ixgbe_ex
++LDLIBS += -lrte_pmd_i40e_ex
++LDLIBS += -lrte_vni_util
++
+ include $(RTE_SDK)/mk/rte.app.mk
+ 
+ endif
+diff -uNr a/app/test-pmd/parameters.c b/app/test-pmd/parameters.c
+--- a/app/test-pmd/parameters.c	2019-08-11 05:37:19.000000000 -0400
++++ b/app/test-pmd/parameters.c	2019-08-13 16:32:27.247569418 -0400
+@@ -661,7 +661,7 @@
+ 	argvopt = argv;
+ 
+ #ifdef RTE_LIBRTE_CMDLINE
+-#define SHORTOPTS "i"
++#define SHORTOPTS "if:o:"
+ #else
+ #define SHORTOPTS ""
+ #endif
+@@ -673,6 +673,18 @@
+ 			printf("Interactive-mode selected\n");
+ 			interactive = 1;
+ 			break;
++		/* interface name for netdev */
++		case 'f':
++			save_inf_name(optarg);
++			break;
++
++		/* interface name for netdev */
++		case 'o':
++			{
++				char *dummy = NULL;
++				vni_core = strtol((const char*)optarg, &dummy, 10);
++			}
++			break;
+ #endif
+ 		case 'a':
+ 			printf("Auto-start selected\n");
+diff -uNr a/app/test-pmd/testpmd.c b/app/test-pmd/testpmd.c
+--- a/app/test-pmd/testpmd.c	2019-08-11 05:37:19.000000000 -0400
++++ b/app/test-pmd/testpmd.c	2019-08-13 16:32:27.249569447 -0400
+@@ -62,7 +62,16 @@
+ #include <rte_latencystats.h>
+ #endif
+ 
++#include <sched.h>
++#include <getopt.h>
++#include <unistd.h>
++#include <pthread.h>
++
++#include <rte_atomic.h>
++
+ #include "testpmd.h"
++#include "rte_dpdm.h"
++#include "ndc.h"
+ 
+ #ifndef MAP_HUGETLB
+ /* FreeBSD may not have MAP_HUGETLB (in fact, it probably doesn't) */
+@@ -89,6 +98,23 @@
+ uint8_t tx_first;
+ char cmdline_filename[PATH_MAX] = {0};
+ 
++/* ndc related parameters */
++
++typedef struct _ndc_thread_info {
++	pthread_t thd_id;
++	int num_of_ports;
++	char inf_name[MAXI_INTERFACE_NAME];
++	pid_t dest_pid;
++	rte_ndc_status status;
++	rte_atomic32_t *done;
++} ndc_thread_info;
++
++int nl_kernel = 1;
++int vni_core = 4;
++pid_t app_pid = 0;
++char inf_name[MAXI_INTERFACE_NAME]="dpdk";
++static rte_atomic32_t done;
++static ndc_thread_info thread_info;
+ /*
+  * NUMA support configuration.
+  * When set, the NUMA support attempts to dispatch the allocation of the
+@@ -524,6 +550,74 @@
+ static void dev_event_callback(const char *device_name,
+ 				enum rte_dev_event_type type,
+ 				void *param);
++static void*
++recv_thread(void* arg)
++{
++	ndc_thread_info *thd_info = arg;
++	pid_t dest_pid = 0; /* 0: for kernel */
++
++	rte_ndc_session_init(thd_info->done);	
++	thd_info->status = rte_ndc_client(thd_info->inf_name,
++		thd_info->num_of_ports,
++		dest_pid,
++		thd_info->done);
++
++	return NULL;
++}
++
++void save_inf_name(char *name)
++{
++	strncpy(inf_name, name, strlen(name)+1);
++}
++
++void close_ndc(void)
++{
++	if ((rte_atomic32_read(&done) == 0) ||
++		rte_ndc_close_confirm(&done))
++		return;
++
++	rte_ndc_session_stop(&done);
++	while (!rte_ndc_close_confirm(&done))
++		usleep(100);
++
++}
++
++/*
++ * Create an interface to communicate with VNI kernel module.
++ * This interface serves as a NDC (Network Device Client) which
++ * send/receive packets to/from kernel Netlink interface
++ * 
++ */
++void
++open_ndc(void)
++{
++	pthread_attr_t attr;
++	cpu_set_t cpuset;
++	int status;
++
++	if ((rte_atomic32_read(&done) != 0) && !rte_ndc_close_confirm(&done))
++		return;
++
++	strncpy(thread_info.inf_name, inf_name, strlen(inf_name)+1);
++	thread_info.num_of_ports = rte_eth_dev_count();
++	if (nl_kernel)
++		thread_info.dest_pid = 0;
++	else
++		thread_info.dest_pid = app_pid;
++
++	thread_info.done = &done;
++	thread_info.status = 0;
++	/* Setup CPU affinity */
++	CPU_ZERO(&cpuset);
++	CPU_SET(vni_core, &cpuset);
++	pthread_attr_init(&attr);
++	pthread_attr_setaffinity_np(&attr, sizeof(cpu_set_t), &cpuset);
++
++	status = pthread_create(&thread_info.thd_id,
++		&attr, &recv_thread, &thread_info);
++	if (status)
++		printf("Fail to create thread with error %d\n", status);
++}
+ 
+ /*
+  * Check if all the ports are started.
+@@ -3267,6 +3361,9 @@
+ 	if (nb_ports == 0)
+ 		TESTPMD_LOG(WARNING, "No probed ethernet devices\n");
+ 
++	if (rte_dev_probe_extension(nb_ports))
++		printf("Fail to connect extended drivers \n");
++
+ 	/* allocate port structures, and init them */
+ 	init_port();
+ 
+@@ -3347,6 +3444,8 @@
+ 	if (!no_device_start && start_port(RTE_PORT_ALL) != 0)
+ 		rte_exit(EXIT_FAILURE, "Start ports failed\n");
+ 
++	open_ndc();
++
+ 	/* set all ports to promiscuous mode by default */
+ 	RTE_ETH_FOREACH_DEV(port_id)
+ 		rte_eth_promiscuous_enable(port_id);
+diff -uNr a/app/test-pmd/testpmd.h b/app/test-pmd/testpmd.h
+--- a/app/test-pmd/testpmd.h	2019-08-11 05:37:19.000000000 -0400
++++ b/app/test-pmd/testpmd.h	2019-08-13 16:32:27.249569447 -0400
+@@ -332,6 +332,9 @@
+ extern bool setup_on_probe_event; /**< disabled by port setup-on iterator */
+ extern uint8_t hot_plug; /**< enable by "--hot-plug" parameter */
+ extern int do_mlockall; /**< set by "--mlockall" or "--no-mlockall" parameter */
++extern int nl_kernel;
++extern int vni_core;
++extern pid_t app_pid;
+ 
+ #ifdef RTE_LIBRTE_IXGBE_BYPASS
+ extern uint32_t bypass_timeout; /**< Store the NIC bypass watchdog timeout */
+@@ -823,6 +826,11 @@
+ void show_gro(portid_t port_id);
+ void setup_gso(const char *mode, portid_t port_id);
+ 
++/* ndc management */
++void open_ndc(void);
++void close_ndc(void);
++void save_inf_name(char *name);
++
+ /* Functions to manage the set of filtered Multicast MAC addresses */
+ void mcast_addr_add(portid_t port_id, struct rte_ether_addr *mc_addr);
+ void mcast_addr_remove(portid_t port_id, struct rte_ether_addr *mc_addr);
