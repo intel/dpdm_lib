@@ -1275,7 +1275,7 @@ ixgbe_set_rx_mode(struct rte_eth_dev *dev)
 	/* Update multicast MAC address */
 	if (dev_ex->nr_mc_addr > 0) {
 		dev->dev_ops->set_mc_addr_list(dev, 
-			(struct ether_addr *)dev_ex->mc_addr_list,
+			(ether_addr_t *)dev_ex->mc_addr_list,
 			dev_ex->nr_mc_addr);
 	}
 
@@ -1297,7 +1297,7 @@ ixgbe_set_rx_mode(struct rte_eth_dev *dev)
 static int
 ixgbe_set_mac_addr(struct rte_eth_dev *dev, void *mac_addr)
 {
-	dev->dev_ops->mac_addr_set(dev, (struct ether_addr *)mac_addr);
+	dev->dev_ops->mac_addr_set(dev, (ether_addr_t *)mac_addr);
 
 	return 0;
 }
@@ -1307,7 +1307,7 @@ ixgbe_validate_addr(struct rte_eth_dev *dev)
 {
 	struct ixgbe_hw *hw =IXGBE_DEV_PRIVATE_TO_HW(dev->data->dev_private);
 
-	if (is_valid_assigned_ether_addr((struct ether_addr *)hw->mac.addr))
+	if (is_valid_assigned_ether_addr((ether_addr_t *)hw->mac.addr))
 		return 1;
 	return 0;
 }
@@ -1469,7 +1469,7 @@ ixgbe_set_vf_mac_addr(struct rte_eth_dev *dev, int vf_id, uint8_t *addr)
 	vfinfo = *(IXGBE_DEV_PRIVATE_TO_P_VFDATA(dev->data->dev_private));
 	rar_entry = hw->mac.num_rar_entries - (vf_id + 1);
 
-	if (is_valid_assigned_ether_addr((struct ether_addr *)addr)) {
+	if (is_valid_assigned_ether_addr((ether_addr_t *)addr)) {
 		memcpy(vfinfo[vf_id].vf_mac_addresses, addr,
 			ETHER_ADDR_LEN);
 		return hw->mac.ops.set_rar(hw, rar_entry, addr, vf_id,

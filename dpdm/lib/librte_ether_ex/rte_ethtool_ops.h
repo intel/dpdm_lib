@@ -43,7 +43,17 @@ struct netdev_priv_data;
 #include <rte_dev_info.h>
 #include <rte_manage.h>
 #include <rte_ethtool_types.h>
-
+#if RTE_VERSION >= RTE_VERSION_NUM(19, 8, 0, 0) 
+#undef ETHER_MAX_VLAN_ID
+#define ETHER_MAX_VLAN_ID RTE_ETHER_MAX_VLAN_ID
+#undef ETHER_ADDR_LEN
+#define ETHER_ADDR_LEN RTE_ETHER_ADDR_LEN
+#define is_valid_assigned_ether_addr rte_is_valid_assigned_ether_addr
+#define ether_addr_copy rte_ether_addr_copy
+typedef struct rte_ether_addr ether_addr_t;
+#else
+typedef struct ether_addr ether_addr_t;
+#endif
 // RTE Ethtool APIs
 /**
  * Retrieve netdev private data from the specified port

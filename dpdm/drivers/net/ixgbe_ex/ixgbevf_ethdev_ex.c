@@ -405,7 +405,7 @@ ixgbevf_validate_addr(struct rte_eth_dev *dev)
 {
 	struct ixgbe_hw *hw =IXGBE_DEV_PRIVATE_TO_HW(dev->data->dev_private);
 
-	if (is_valid_assigned_ether_addr((struct ether_addr *)hw->mac.addr))
+	if (is_valid_assigned_ether_addr((ether_addr_t *)hw->mac.addr))
 		return 1;
 	return 0;
 }

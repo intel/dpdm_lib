@@ -138,7 +138,7 @@ static struct rte_dev_reg_set i40e_reg_list[] = {
 int
 i40e_find_all_vlan_for_mac(struct i40e_vsi *vsi,
 			   struct i40e_macvlan_filter *mv_f,
-			   int num, struct ether_addr *addr)
+			   int num, ether_addr_t *addr)
 {
 	int i;
 	uint32_t j, k;
@@ -1912,11 +1912,11 @@ i40e_set_rx_mode(struct rte_eth_dev *dev)
 			mac_ptr = dev_ex->uc_addr_list;
 			rte_memcpy(&dev->data->mac_addrs[0], mac_ptr,
 				ETH_ADDR_LEN);
-			dev->dev_ops->mac_addr_set(dev, (struct ether_addr *)mac_ptr);
+			dev->dev_ops->mac_addr_set(dev, (ether_addr_t *)mac_ptr);
 			if (dev_ex->nr_uc_addr > 1)
 				for (i = 1; i < dev_ex->nr_uc_addr; i++, 
 					mac_ptr += ETH_ADDR_LEN) {
-					dev->dev_ops->mac_addr_add(dev, (struct ether_addr *)mac_ptr,
+					dev->dev_ops->mac_addr_add(dev, (ether_addr_t *)mac_ptr,
 						i, 0);
 					rte_memcpy(&dev->data->mac_addrs[i], mac_ptr, 
 						ETH_ADDR_LEN);
@@ -1930,7 +1930,7 @@ i40e_set_rx_mode(struct rte_eth_dev *dev)
 static int
 i40e_set_mac_addr(struct rte_eth_dev *dev, void *mac_addr)
 {
-	dev->dev_ops->mac_addr_set(dev, (struct ether_addr *)mac_addr);
+	dev->dev_ops->mac_addr_set(dev, (ether_addr_t *)mac_addr);
 
 	return 0;
 }
@@ -1938,7 +1938,7 @@ i40e_set_mac_addr(struct rte_eth_dev *dev, void *mac_addr)
 static int 
 i40e_validate_addr(struct rte_eth_dev *dev)
 {
-	if (is_valid_assigned_ether_addr((struct ether_addr *)&dev->data->mac_addrs[0]))
+	if (is_valid_assigned_ether_addr((ether_addr_t *)&dev->data->mac_addrs[0]))
 		return 1;
 
 	return 0;
@@ -2019,7 +2019,7 @@ i40e_set_vf_mac_addr(struct rte_eth_dev *dev, int vf_id, uint8_t *mac_addr)
 		return -EINVAL;
 	}
 
-	ether_addr_copy((struct ether_addr *)mac_addr, &vf->mac_addr);
+	ether_addr_copy((ether_addr_t *)mac_addr, &vf->mac_addr);
 
 	/* Remove all existing mac */
 	TAILQ_FOREACH_SAFE(f, &vsi->mac_list, next, temp)
