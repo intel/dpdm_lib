@@ -1229,7 +1229,17 @@ i40e_set_setting(struct rte_eth_dev *dev,
 		config.abilities |= I40E_AQ_PHY_ENABLE_ATOMIC_LINK;
 		/* If link is up put link down */
 		if (hw->phy.link_info.link_info & I40E_AQ_LINK_UP) {
+#if RTE_VERSION >= RTE_VERSION_NUM(20, 5, 0, 0)
+			int i;
+
+			for (i = 0; i < dev->data->nb_tx_queues; i++)
+				i40e_dev_tx_queue_stop(dev, i);
+
+			for (i = 0; i < dev->data->nb_rx_queues; i++)
+				i40e_dev_rx_queue_stop(dev, i);
+#else
 			i40e_dev_switch_queues(pf, FALSE);
+#endif
 		}
 
 		/* make the aq call */
